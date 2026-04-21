@@ -7,9 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A9DD835A2F93702600669DA6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A9DD83522F93702600669DA6 /* Assets.xcassets */; };
 		A9DD83752F95E21300669DA6 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9DD83742F95E21300669DA6 /* WidgetKit.framework */; };
 		A9DD83772F95E21300669DA6 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9DD83762F95E21300669DA6 /* SwiftUI.framework */; };
-		A9DD83882F95E21500669DA6 /* TravelWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A9DD83722F95E21300669DA6 /* TravelWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A9DD83882F95E21500669DA6 /* JourneaseWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A9DD83722F95E21300669DA6 /* JourneaseWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -29,7 +30,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				A9DD83882F95E21500669DA6 /* TravelWidgetExtension.appex in Embed Foundation Extensions */,
+				A9DD83882F95E21500669DA6 /* JourneaseWidgetExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -37,34 +38,45 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		A9DD83302F920B9700669DA6 /* Travel.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Travel.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		A9DD83722F95E21300669DA6 /* TravelWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TravelWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A9DD83302F920B9700669DA6 /* Journease.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Journease.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A9DD83522F93702600669DA6 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A9DD83722F95E21300669DA6 /* JourneaseWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = JourneaseWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		A9DD83742F95E21300669DA6 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		A9DD83762F95E21300669DA6 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		A9DD83892F95E21500669DA6 /* Exceptions for "TravelWidget" folder in "TravelWidgetExtension" target */ = {
+		A9DD83892F95E21500669DA6 /* Exceptions for "TravelWidget" folder in "JourneaseWidgetExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
-			target = A9DD83712F95E21300669DA6 /* TravelWidgetExtension */;
+			target = A9DD83712F95E21300669DA6 /* JourneaseWidgetExtension */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		A9DD83322F920B9700669DA6 /* Travel */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Travel;
-			sourceTree = "<group>";
-		};
 		A9DD83782F95E21300669DA6 /* TravelWidget */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				A9DD83892F95E21500669DA6 /* Exceptions for "TravelWidget" folder in "TravelWidgetExtension" target */,
+				A9DD83892F95E21500669DA6 /* Exceptions for "TravelWidget" folder in "JourneaseWidgetExtension" target */,
 			);
 			path = TravelWidget;
+			sourceTree = "<group>";
+		};
+		A9DD83A12F970F9300669DA6 /* Features */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Features;
+			sourceTree = "<group>";
+		};
+		A9DD83B52F9710C500669DA6 /* Core */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Core;
+			sourceTree = "<group>";
+		};
+		A9DD83CE2F97126000669DA6 /* App */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = App;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -92,7 +104,10 @@
 		A9DD83272F920B9700669DA6 = {
 			isa = PBXGroup;
 			children = (
-				A9DD83322F920B9700669DA6 /* Travel */,
+				A9DD83522F93702600669DA6 /* Assets.xcassets */,
+				A9DD83CE2F97126000669DA6 /* App */,
+				A9DD83B52F9710C500669DA6 /* Core */,
+				A9DD83A12F970F9300669DA6 /* Features */,
 				A9DD83782F95E21300669DA6 /* TravelWidget */,
 				A9DD83732F95E21300669DA6 /* Frameworks */,
 				A9DD83312F920B9700669DA6 /* Products */,
@@ -102,8 +117,8 @@
 		A9DD83312F920B9700669DA6 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				A9DD83302F920B9700669DA6 /* Travel.app */,
-				A9DD83722F95E21300669DA6 /* TravelWidgetExtension.appex */,
+				A9DD83302F920B9700669DA6 /* Journease.app */,
+				A9DD83722F95E21300669DA6 /* JourneaseWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -120,9 +135,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		A9DD832F2F920B9700669DA6 /* Travel */ = {
+		A9DD832F2F920B9700669DA6 /* Journease */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A9DD833B2F920B9800669DA6 /* Build configuration list for PBXNativeTarget "Travel" */;
+			buildConfigurationList = A9DD833B2F920B9800669DA6 /* Build configuration list for PBXNativeTarget "Journease" */;
 			buildPhases = (
 				A9DD832C2F920B9700669DA6 /* Sources */,
 				A9DD832D2F920B9700669DA6 /* Frameworks */,
@@ -135,18 +150,20 @@
 				A9DD83872F95E21500669DA6 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				A9DD83322F920B9700669DA6 /* Travel */,
+				A9DD83A12F970F9300669DA6 /* Features */,
+				A9DD83B52F9710C500669DA6 /* Core */,
+				A9DD83CE2F97126000669DA6 /* App */,
 			);
-			name = Travel;
+			name = Journease;
 			packageProductDependencies = (
 			);
 			productName = Travel;
-			productReference = A9DD83302F920B9700669DA6 /* Travel.app */;
+			productReference = A9DD83302F920B9700669DA6 /* Journease.app */;
 			productType = "com.apple.product-type.application";
 		};
-		A9DD83712F95E21300669DA6 /* TravelWidgetExtension */ = {
+		A9DD83712F95E21300669DA6 /* JourneaseWidgetExtension */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A9DD838A2F95E21500669DA6 /* Build configuration list for PBXNativeTarget "TravelWidgetExtension" */;
+			buildConfigurationList = A9DD838A2F95E21500669DA6 /* Build configuration list for PBXNativeTarget "JourneaseWidgetExtension" */;
 			buildPhases = (
 				A9DD836E2F95E21300669DA6 /* Sources */,
 				A9DD836F2F95E21300669DA6 /* Frameworks */,
@@ -159,11 +176,11 @@
 			fileSystemSynchronizedGroups = (
 				A9DD83782F95E21300669DA6 /* TravelWidget */,
 			);
-			name = TravelWidgetExtension;
+			name = JourneaseWidgetExtension;
 			packageProductDependencies = (
 			);
 			productName = TravelWidgetExtension;
-			productReference = A9DD83722F95E21300669DA6 /* TravelWidgetExtension.appex */;
+			productReference = A9DD83722F95E21300669DA6 /* JourneaseWidgetExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
@@ -184,7 +201,7 @@
 					};
 				};
 			};
-			buildConfigurationList = A9DD832B2F920B9700669DA6 /* Build configuration list for PBXProject "Travel" */;
+			buildConfigurationList = A9DD832B2F920B9700669DA6 /* Build configuration list for PBXProject "Journease" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -198,8 +215,8 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				A9DD832F2F920B9700669DA6 /* Travel */,
-				A9DD83712F95E21300669DA6 /* TravelWidgetExtension */,
+				A9DD832F2F920B9700669DA6 /* Journease */,
+				A9DD83712F95E21300669DA6 /* JourneaseWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -209,6 +226,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A9DD835A2F93702600669DA6 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -241,7 +259,7 @@
 /* Begin PBXTargetDependency section */
 		A9DD83872F95E21500669DA6 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = A9DD83712F95E21300669DA6 /* TravelWidgetExtension */;
+			target = A9DD83712F95E21300669DA6 /* JourneaseWidgetExtension */;
 			targetProxy = A9DD83862F95E21500669DA6 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -383,6 +401,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -415,6 +434,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -444,6 +464,7 @@
 				INFOPLIST_FILE = TravelWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = TravelWidget;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -474,6 +495,7 @@
 				INFOPLIST_FILE = TravelWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = TravelWidget;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -495,7 +517,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		A9DD832B2F920B9700669DA6 /* Build configuration list for PBXProject "Travel" */ = {
+		A9DD832B2F920B9700669DA6 /* Build configuration list for PBXProject "Journease" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A9DD83392F920B9800669DA6 /* Debug */,
@@ -504,7 +526,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		A9DD833B2F920B9800669DA6 /* Build configuration list for PBXNativeTarget "Travel" */ = {
+		A9DD833B2F920B9800669DA6 /* Build configuration list for PBXNativeTarget "Journease" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A9DD833C2F920B9800669DA6 /* Debug */,
@@ -513,7 +535,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		A9DD838A2F95E21500669DA6 /* Build configuration list for PBXNativeTarget "TravelWidgetExtension" */ = {
+		A9DD838A2F95E21500669DA6 /* Build configuration list for PBXNativeTarget "JourneaseWidgetExtension" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A9DD838B2F95E21500669DA6 /* Debug */,

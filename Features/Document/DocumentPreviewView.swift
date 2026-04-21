@@ -48,4 +48,13 @@ struct DocumentPreviewView: View {
                 .scaledToFit()
                 .frame(maxWidth: .infinity)
                 .frame(height: 400)
-                .clipShape(RoundedRectangle(c
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .padding(20)
+
+            Spacer()
+        }
+        .sheet(isPresented: $isDocumentFormActive) {
+            DocumentFormView(initialDocName: selectedDocumentName)
+        }
+    }
+}

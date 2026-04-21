@@ -12,7 +12,5 @@ import SwiftUI
 struct TravelWidgetBundle: WidgetBundle {
     var body: some Widget {
         TravelWidget()
-        TravelWidgetControl()
-        TravelWidgetLiveActivity()
     }
 }
