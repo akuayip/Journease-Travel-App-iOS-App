@@ -4,19 +4,21 @@
 //
 //  Created by M. Arief Rahman Hakim on 21/04/26.
 //
+
+
 import SwiftUI
 import PhotosUI
-
+ 
 struct Home: View {
-
+ 
     @StateObject private var vm = HomeViewModel()
     @Namespace private var cardTransition
-
+ 
     var body: some View {
         NavigationStack {
             ZStack {
                 Color(.systemGray5).ignoresSafeArea()
-
+ 
                 if vm.isPreviewActive {
                     DocumentPreviewView(
                         selectedDocument: vm.selectedDocument,
@@ -26,7 +28,7 @@ struct Home: View {
                         }
                     )
                     .transition(.asymmetric(insertion: .move(edge: .bottom), removal: .move(edge: .bottom)))
-
+ 
                 } else {
                     ZStack(alignment: .bottom) {
                         VStack(spacing: 0) {
@@ -40,7 +42,7 @@ struct Home: View {
                             .frame(maxWidth: .infinity)
                             .padding(.top, 80)
                             .padding(.bottom, 20)
-
+ 
                             if !vm.isDetailActive {
                                 VStack(spacing: 0) {
                                     CarouselView(
@@ -54,7 +56,7 @@ struct Home: View {
                                         }
                                     )
                                     .frame(height: 300)
-
+ 
                                     if !vm.isEditing {
                                         ActionButtonsView(
                                             onCustomize: { withAnimation(.spring()) { vm.isEditing = true } },
@@ -64,14 +66,38 @@ struct Home: View {
                                         )
                                         .padding(.top, 20)
                                         Spacer()
-                                        SearchBarHomeView(searchText: $vm.searchText)
-                                            .padding(.bottom, 10)
+ 
+                                        // Search bar sebagai button trigger sheet
+                                        Button {
+                                            vm.isSearchActive = true
+                                        } label: {
+                                            HStack {
+                                                Image(systemName: "magnifyingglass")
+                                                    .font(.title2)
+                                                    .foregroundColor(.secondary)
+                                                Text("Search")
+                                                    .font(.title3)
+                                                    .foregroundColor(.secondary)
+                                                Spacer()
+                                                Image(systemName: "mic.fill")
+                                                    .font(.title2)
+                                                    .foregroundColor(.secondary)
+                                            }
+                                            .padding(.horizontal, 20)
+                                            .frame(height: 55)
+                                            .background(Color.white)
+                                            .clipShape(Capsule())
+                                            .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 4)
+                                            .padding(.horizontal, 30)
+                                        }
+                                        .padding(.bottom, 10)
+ 
                                     } else {
                                         Spacer()
                                     }
                                 }
                                 .transition(.asymmetric(insertion: .opacity, removal: .opacity))
-
+ 
                             } else {
                                 PouchDetailView(
                                     selectedColor: vm.selectedColor,
@@ -79,7 +105,6 @@ struct Home: View {
                                     namespace: cardTransition,
                                     isDetailActive: vm.isDetailActive,
                                     searchText: $vm.searchText,
-                                    showAddOptions: $vm.showAddOptions,
                                     isCameraActive: $vm.isCameraActive,
                                     isPhotoPickerActive: $vm.isPhotoPickerActive,
                                     isFilePickerActive: $vm.isFilePickerActive,
@@ -97,7 +122,7 @@ struct Home: View {
                                 .transition(.move(edge: .bottom).combined(with: .opacity))
                             }
                         }
-
+ 
                         if vm.isEditing {
                             CustomizePanelView(
                                 selectedPouch: $vm.selectedPouch,
@@ -112,9 +137,12 @@ struct Home: View {
                 }
             }
         }
+        .sheet(isPresented: $vm.isSearchActive) {
+            DocumentSearchView()
+        }
     }
 }
-
+ 
 #Preview {
     Home()
 }

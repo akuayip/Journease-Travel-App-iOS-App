@@ -23,11 +23,11 @@ struct ActionButtonsView: View {
                 Image(systemName: "trash").font(.title2).foregroundStyle(.white)
                     .frame(width: 58, height: 58).background(.gray).clipShape(Circle())
             }
-            .alert("Delete Trip", isPresented: $showDeleteAlert) {
+            .alert("Are you sure you want to delete this trip?", isPresented: $showDeleteAlert) {
                 Button("Delete", role: .destructive) { onDelete() }
                 Button("Cancel", role: .cancel) { }
             } message: {
-                Text("Are you sure you want to delete this trip? This action cannot be undone.")
+                Text("All documents will be deleted.")
             }
             Button { onAdd() } label: {
                 Image(systemName: "plus").font(.title2).bold().foregroundStyle(.white)

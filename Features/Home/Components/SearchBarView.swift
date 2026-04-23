@@ -8,15 +8,17 @@
 import SwiftUI
 import PhotosUI
 
+
+
 struct SearchBarView: View {
     @Binding var searchText: String
-    @Binding var showAddOptions: Bool
     @Binding var isCameraActive: Bool
     @Binding var isPhotoPickerActive: Bool
     @Binding var isFilePickerActive: Bool
     @Binding var isAddDocumentFormActive: Bool
     @Binding var capturedImage: UIImage?
     @Binding var photosItem: PhotosPickerItem?
+    
 
     var body: some View {
         HStack(spacing: 15) {
@@ -29,18 +31,30 @@ struct SearchBarView: View {
             .background(Color.white).clipShape(Capsule())
             .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 4)
 
-            Button { showAddOptions = true } label: {
-                Image(systemName: "plus").font(.title2).bold().foregroundColor(.white)
+            Menu {
+                Button {
+                    isFilePickerActive = true
+                } label: {
+                    Label("Choose File", systemImage: "doc")
+                }
+                
+                Button {
+                    isPhotoPickerActive = true
+                } label: {
+                    Label("Choose Photo", systemImage: "photo")
+                }
+                Button {
+                    isCameraActive = true
+                } label: {
+                    Label("Take a Photo", systemImage: "camera")
+                }
+            } label: {
+                Image(systemName: "plus").font(.title2).bold().foregroundColor(.black)
                     .frame(width: 55, height: 55)
-                    .background(Color.black).clipShape(Circle())
+                    .background(Color.white).clipShape(Circle())
                     .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 5)
             }
-            .confirmationDialog("Add Document", isPresented: $showAddOptions, titleVisibility: .visible) {
-                Button("Take a Photo") { isCameraActive = true }
-                Button("Choose Photo") { isPhotoPickerActive = true }
-                Button("Choose File") { isFilePickerActive = true }
-                Button("Cancel", role: .cancel) { }
-            }
+            
             .photosPicker(isPresented: $isPhotoPickerActive, selection: $photosItem, matching: .images)
             .onChange(of: photosItem) { _, newItem in
                 Task {

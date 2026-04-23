@@ -7,36 +7,70 @@
 
 import SwiftUI
 import PhotosUI
-
+ 
 struct PouchDetailView: View {
     let selectedColor: Color
     let columns: [GridItem]
     let namespace: Namespace.ID
     let isDetailActive: Bool
-
+ 
     @Binding var searchText: String
-    @Binding var showAddOptions: Bool
     @Binding var isCameraActive: Bool
     @Binding var isPhotoPickerActive: Bool
     @Binding var isFilePickerActive: Bool
     @Binding var isAddDocumentFormActive: Bool
     @Binding var capturedImage: UIImage?
     @Binding var photosItem: PhotosPickerItem?
+ 
     @State private var selectedCategory: DocumentCategory = .all
-    @State private var showSortingOptions: Bool = false
-
+    @State private var viewMode: ViewMode = .gallery
+ 
+    enum ViewMode {
+        case gallery
+        case list
+    }
+ 
     let onBack: () -> Void
     let onSelectDocument: (String, String) -> Void
-    
-    enum DocumentCategory: String, CaseIterable {
-        case all = "All"
-        case identity = "Identity"
-        case transportation = "Transportation"
-        case accommodation = "Accommodation"
-        case activity = "Activity & Attraction"
-        case others = "Others"
+ 
+    // MARK: - Dummy Data
+    struct DocumentItem: Identifiable {
+        let id = UUID()
+        let name: String
+        let category: DocumentCategory
+        let imageName: String
     }
-
+ 
+    let dummyDocuments: [DocumentItem] = [
+        DocumentItem(name: "KTP", category: .identity, imageName: "ktp"),
+        DocumentItem(name: "Passport", category: .identity, imageName: "ktp"),
+        DocumentItem(name: "Visa", category: .identity, imageName: "ktp"),
+        DocumentItem(name: "SIM", category: .identity, imageName: "ktp"),
+        DocumentItem(name: "Tiket Pesawat", category: .transportation, imageName: "ktp"),
+        DocumentItem(name: "Boarding Pass", category: .transportation, imageName: "ktp"),
+        DocumentItem(name: "Tiket Kereta", category: .transportation, imageName: "ktp"),
+        DocumentItem(name: "Booking Hotel", category: .accommodation, imageName: "ktp"),
+        DocumentItem(name: "Voucher Airbnb", category: .accommodation, imageName: "ktp"),
+        DocumentItem(name: "Tiket Wahana", category: .activity, imageName: "ktp"),
+        DocumentItem(name: "Itinerary", category: .activity, imageName: "ktp"),
+        DocumentItem(name: "Travel Insurance", category: .others, imageName: "ktp"),
+    ]
+ 
+    // MARK: - Filtered + Searched
+    var searchedDocuments: [DocumentItem] {
+        let filtered = selectedCategory == .all
+            ? dummyDocuments
+            : dummyDocuments.filter { $0.category == selectedCategory }
+ 
+        if searchText.trimmingCharacters(in: .whitespaces).isEmpty {
+            return filtered
+        }
+        return filtered.filter {
+            $0.name.lowercased().contains(searchText.lowercased()) ||
+            $0.category.rawValue.lowercased().contains(searchText.lowercased())
+        }
+    }
+ 
     var body: some View {
         ZStack(alignment: .bottom) {
             GeometryReader { geo in
@@ -45,7 +79,7 @@ struct PouchDetailView: View {
                         .fill(selectedColor)
                         .frame(width: geo.size.width, height: geo.size.height)
                         .matchedGeometryEffect(id: "hero_card", in: namespace, isSource: isDetailActive)
-
+ 
                     VStack(spacing: 0) {
                         // Header buttons
                         HStack(spacing: 12) {
@@ -58,79 +92,163 @@ struct PouchDetailView: View {
                                     .clipShape(Circle())
                             }
                             Spacer()
-                            Button { print("Folder") } label: {
-                                Image(systemName: "folder.badge.plus")
-                                    .font(.title3)
+                            Menu {
+                                if viewMode == .gallery {
+                                    Button {
+                                        viewMode = .list
+                                    } label: {
+                                        Label("View as List", systemImage: "list.bullet")
+                                    }
+                                } else {
+                                    Button {
+                                        viewMode = .gallery
+                                    } label: {
+                                        Label("View as Gallery", systemImage: "square.grid.2x2")
+                                    }
+                                }
+                            } label: {
+                                Image(systemName: "ellipsis")
+                                    .font(.title3).bold()
                                     .foregroundStyle(.black)
                                     .frame(width: 50, height: 50)
                                     .background(Color.black.opacity(0.12))
                                     .clipShape(Circle())
                             }
-                            Button { print("Edit") } label: {
-                                Text("Edit")
-                                    .font(.headline)
-                                    .foregroundStyle(.black)
-                                    .frame(width: 75, height: 50)
-                                    .background(Color.black.opacity(0.12))
-                                    .clipShape(Capsule())
-                            }
                         }
                         .padding(.top, 20)
                         .padding(.horizontal, 20)
-
+ 
                         // Sorting bar
                         HStack {
-                            Text("Sort Dcocument by")
+                            Text("Sort by")
                                 .font(.body)
                                 .foregroundColor(.black.opacity(0.8))
                             Spacer()
-                            Picker("", selection: $selectedCategory) {
+                            Menu {
                                 ForEach(DocumentCategory.allCases, id: \.self) { category in
-                                    Text(category.rawValue).tag(category)
+                                    Button {
+                                        selectedCategory = category
+                                    } label: {
+                                        HStack {
+                                            Text(category.rawValue)
+                                            if selectedCategory == category {
+                                                Image(systemName: "checkmark")
+                                            }
+                                        }
+                                    }
+                                }
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Text(selectedCategory.rawValue)
+                                        .font(.subheadline)
+                                        .foregroundColor(.black.opacity(0.7))
+                                        .lineLimit(1)
+                                        .truncationMode(.tail)
+                                        .frame(maxWidth: 130, alignment: .trailing)
+                                    Image(systemName: "chevron.up.chevron.down")
+                                        .font(.caption)
+                                        .foregroundColor(.black.opacity(0.7))
                                 }
                             }
-                            .pickerStyle(.menu)
-                            .tint(.black.opacity(0.6))
                         }
                         .padding(.horizontal, 16)
                         .padding(.vertical, 12)
                         .background(Color.white.opacity(0.4))
                         .clipShape(Capsule())
                         .padding(.horizontal, 20)
-                        .padding(.top, 12)
-
-                        // Document Grid
+                        .padding(.top, 20)
+ 
+                        // Document Grid or List
                         ScrollView(showsIndicators: false) {
-                            LazyVGrid(columns: columns, spacing: 14) {
-                                ForEach(0..<9) { _ in
-                                    Button {
-                                        onSelectDocument("ktp", "KTP")
-                                    } label: {
-                                        VStack(spacing: 4) {
-                                            GeometryReader { g in
-                                                Image("ktp")
-                                                    .resizable()
-                                                    .scaledToFit()
-                                                    .frame(width: g.size.width, height: 85)
-                                                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                            if searchedDocuments.isEmpty {
+                                // Empty state
+                                VStack(spacing: 12) {
+                                    Image(systemName: "doc.text.magnifyingglass")
+                                        .font(.system(size: 40))
+                                        .foregroundColor(.black.opacity(0.3))
+                                    Text("No documents found")
+                                        .font(.headline)
+                                        .foregroundColor(.black.opacity(0.6))
+                                    Text("Try a different keyword or category")
+                                        .font(.caption)
+                                        .foregroundColor(.black.opacity(0.4))
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.top, 60)
+ 
+                            } else if viewMode == .gallery {
+                                LazyVGrid(columns: columns, spacing: 14) {
+                                    ForEach(searchedDocuments) { doc in
+                                        Button {
+                                            onSelectDocument(doc.imageName, doc.name)
+                                        } label: {
+                                            VStack(spacing: 4) {
+                                                GeometryReader { g in
+                                                    Image(doc.imageName)
+                                                        .resizable()
+                                                        .scaledToFit()
+                                                        .frame(width: g.size.width, height: 85)
+                                                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                                                }
+                                                .frame(height: 85)
+                                                Text(doc.name)
+                                                    .font(.system(size: 12, weight: .semibold))
+                                                    .foregroundColor(.black)
+                                                    .lineLimit(1)
+                                                HStack(spacing: 3) {
+                                                    Image(systemName: "folder").font(.caption2)
+                                                    Text(doc.category.rawValue).font(.caption2)
+                                                        .lineLimit(1)
+                                                }
+                                                .foregroundColor(.black.opacity(0.6))
                                             }
-                                            .frame(height: 85)
-
-                                            Text("KTP")
-                                                .font(.system(size: 12, weight: .semibold))
-                                                .foregroundColor(.black)
-                                            HStack(spacing: 3) {
-                                                Image(systemName: "folder").font(.caption2)
-                                                Text("Identity").font(.caption2)
-                                            }
-                                            .foregroundColor(.black.opacity(0.6))
                                         }
                                     }
                                 }
+                                .padding(.horizontal, 16)
+                                .padding(.top, 14)
+                                .padding(.bottom, 80)
+ 
+                            } else {
+                                LazyVStack(spacing: 10) {
+                                    ForEach(searchedDocuments) { doc in
+                                        Button {
+                                            onSelectDocument(doc.imageName, doc.name)
+                                        } label: {
+                                            HStack(spacing: 14) {
+                                                Image(doc.imageName)
+                                                    .resizable()
+                                                    .scaledToFill()
+                                                    .frame(width: 60, height: 60)
+                                                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                                                VStack(alignment: .leading, spacing: 4) {
+                                                    Text(doc.name)
+                                                        .font(.system(size: 14, weight: .semibold))
+                                                        .foregroundColor(.black)
+                                                        .lineLimit(1)
+                                                    HStack(spacing: 4) {
+                                                        Image(systemName: "folder").font(.caption2)
+                                                        Text(doc.category.rawValue).font(.caption2)
+                                                            .lineLimit(1)
+                                                    }
+                                                    .foregroundColor(.black.opacity(0.6))
+                                                }
+                                                Spacer()
+                                                Image(systemName: "chevron.right")
+                                                    .font(.caption)
+                                                    .foregroundColor(.black.opacity(0.4))
+                                            }
+                                            .padding(.horizontal, 16)
+                                            .padding(.vertical, 10)
+                                            .background(Color.white.opacity(0.4))
+                                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                                            .padding(.horizontal, 16)
+                                        }
+                                    }
+                                }
+                                .padding(.top, 14)
+                                .padding(.bottom, 80)
                             }
-                            .padding(.horizontal, 16)
-                            .padding(.top, 14)
-                            .padding(.bottom, 80)
                         }
                     }
                 }
@@ -138,11 +256,10 @@ struct PouchDetailView: View {
             }
             .padding(.vertical, -40)
             .ignoresSafeArea(edges: .bottom)
-
-            // Search bar di luar GeometryReader — tidak ikut turun
+ 
+            // Search bar
             SearchBarView(
                 searchText: $searchText,
-                showAddOptions: $showAddOptions,
                 isCameraActive: $isCameraActive,
                 isPhotoPickerActive: $isPhotoPickerActive,
                 isFilePickerActive: $isFilePickerActive,

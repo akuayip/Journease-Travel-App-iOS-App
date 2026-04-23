@@ -5,14 +5,13 @@
 //  Created by M. Arief Rahman Hakim on 21/04/26.
 //
 
-import SwiftUI
+import Foundation
 
-struct DocumentCategory: View {
-    var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
-    }
-}
-
-#Preview {
-    DocumentCategory()
+enum DocumentCategory: String, CaseIterable {
+    case all = "All"
+    case identity = "Identity"
+    case transportation = "Transportation"
+    case accommodation = "Accommodation"
+    case activity = "Activity & Attraction"
+    case others = "Others"
 }

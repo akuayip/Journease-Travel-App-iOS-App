@@ -27,7 +27,6 @@ class HomeViewModel: ObservableObject {
     @Published var isDocumentFormActive: Bool = false
 
     // MARK: - Add Document
-    @Published var showAddOptions: Bool = false
     @Published var isAddDocumentFormActive: Bool = false
     @Published var isCameraActive: Bool = false
     @Published var isPhotoPickerActive: Bool = false
@@ -40,6 +39,7 @@ class HomeViewModel: ObservableObject {
 
     // MARK: - Search
     @Published var searchText: String = ""
+    @Published var isSearchActive: Bool = false
 
     // MARK: - Pouch
     @Published var selectedPouch: String = "pouch_blue"
