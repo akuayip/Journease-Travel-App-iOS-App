@@ -33,6 +33,8 @@ struct ActionButtonsView: View {
                 Image(systemName: "plus").font(.title2).bold().foregroundStyle(.white)
                     .frame(width: 58, height: 58).background(.gray).clipShape(Circle())
             }
+            
         }
+        .padding(.top, 40)
     }
 }

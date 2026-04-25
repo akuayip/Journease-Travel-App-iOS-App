@@ -11,7 +11,7 @@ struct Trip: Identifiable {
     let id = UUID()
     var name: String
     var totalDocuments: Int
-    var pouchColor: String  // nama asset pouch, e.g. "pouch_blue"
+    var pouchColor: String
     var startDate: Date?
 
     var color: Color {

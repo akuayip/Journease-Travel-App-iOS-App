@@ -7,13 +7,14 @@
 
 import SwiftUI
 import PhotosUI
- 
+
 struct PouchDetailView: View {
     let selectedColor: Color
+    let selectedShape: String
     let columns: [GridItem]
     let namespace: Namespace.ID
     let isDetailActive: Bool
- 
+
     @Binding var searchText: String
     @Binding var isCameraActive: Bool
     @Binding var isPhotoPickerActive: Bool
@@ -21,18 +22,13 @@ struct PouchDetailView: View {
     @Binding var isAddDocumentFormActive: Bool
     @Binding var capturedImage: UIImage?
     @Binding var photosItem: PhotosPickerItem?
- 
-    @State private var selectedCategory: DocumentCategory = .all
-    @State private var viewMode: ViewMode = .gallery
- 
-    enum ViewMode {
-        case gallery
-        case list
-    }
- 
+
+    @Binding var selectedCategory: DocumentCategory
+
     let onBack: () -> Void
     let onSelectDocument: (String, String) -> Void
- 
+    let viewMode: HomeViewModel.PouchViewMode
+
     // MARK: - Dummy Data
     struct DocumentItem: Identifiable {
         let id = UUID()
@@ -40,7 +36,7 @@ struct PouchDetailView: View {
         let category: DocumentCategory
         let imageName: String
     }
- 
+
     let dummyDocuments: [DocumentItem] = [
         DocumentItem(name: "KTP", category: .identity, imageName: "ktp"),
         DocumentItem(name: "Passport", category: .identity, imageName: "ktp"),
@@ -55,13 +51,13 @@ struct PouchDetailView: View {
         DocumentItem(name: "Itinerary", category: .activity, imageName: "ktp"),
         DocumentItem(name: "Travel Insurance", category: .others, imageName: "ktp"),
     ]
- 
+
     // MARK: - Filtered + Searched
     var searchedDocuments: [DocumentItem] {
         let filtered = selectedCategory == .all
             ? dummyDocuments
             : dummyDocuments.filter { $0.category == selectedCategory }
- 
+
         if searchText.trimmingCharacters(in: .whitespaces).isEmpty {
             return filtered
         }
@@ -70,98 +66,28 @@ struct PouchDetailView: View {
             $0.category.rawValue.lowercased().contains(searchText.lowercased())
         }
     }
- 
+
     var body: some View {
         ZStack(alignment: .bottom) {
+
+            // MARK: - Shape + konten
             GeometryReader { geo in
                 ZStack(alignment: .top) {
-                    RoundedRectangle(cornerRadius: 50)
-                        .fill(selectedColor)
+                    // Background shape
+                    Image(selectedShape)
+                        .resizable()
+                        .scaledToFill()
                         .frame(width: geo.size.width, height: geo.size.height)
+                        .offset(y: isDetailActive ? 90 : geo.size.height) // ← mulai dari bawah
+                        .animation(.spring(response: 0.5, dampingFraction: 0.8), value: isDetailActive)
                         .matchedGeometryEffect(id: "hero_card", in: namespace, isSource: isDetailActive)
- 
+
+                    // Konten grid
                     VStack(spacing: 0) {
-                        // Header buttons
-                        HStack(spacing: 12) {
-                            Button { onBack() } label: {
-                                Image(systemName: "chevron.left")
-                                    .font(.title3).bold()
-                                    .foregroundStyle(.black)
-                                    .frame(width: 50, height: 50)
-                                    .background(Color.black.opacity(0.12))
-                                    .clipShape(Circle())
-                            }
-                            Spacer()
-                            Menu {
-                                if viewMode == .gallery {
-                                    Button {
-                                        viewMode = .list
-                                    } label: {
-                                        Label("View as List", systemImage: "list.bullet")
-                                    }
-                                } else {
-                                    Button {
-                                        viewMode = .gallery
-                                    } label: {
-                                        Label("View as Gallery", systemImage: "square.grid.2x2")
-                                    }
-                                }
-                            } label: {
-                                Image(systemName: "ellipsis")
-                                    .font(.title3).bold()
-                                    .foregroundStyle(.black)
-                                    .frame(width: 50, height: 50)
-                                    .background(Color.black.opacity(0.12))
-                                    .clipShape(Circle())
-                            }
-                        }
-                        .padding(.top, 20)
-                        .padding(.horizontal, 20)
- 
-                        // Sorting bar
-                        HStack {
-                            Text("Sort by")
-                                .font(.body)
-                                .foregroundColor(.black.opacity(0.8))
-                            Spacer()
-                            Menu {
-                                ForEach(DocumentCategory.allCases, id: \.self) { category in
-                                    Button {
-                                        selectedCategory = category
-                                    } label: {
-                                        HStack {
-                                            Text(category.rawValue)
-                                            if selectedCategory == category {
-                                                Image(systemName: "checkmark")
-                                            }
-                                        }
-                                    }
-                                }
-                            } label: {
-                                HStack(spacing: 4) {
-                                    Text(selectedCategory.rawValue)
-                                        .font(.subheadline)
-                                        .foregroundColor(.black.opacity(0.7))
-                                        .lineLimit(1)
-                                        .truncationMode(.tail)
-                                        .frame(maxWidth: 130, alignment: .trailing)
-                                    Image(systemName: "chevron.up.chevron.down")
-                                        .font(.caption)
-                                        .foregroundColor(.black.opacity(0.7))
-                                }
-                            }
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 12)
-                        .background(Color.white.opacity(0.4))
-                        .clipShape(Capsule())
-                        .padding(.horizontal, 20)
-                        .padding(.top, 20)
- 
-                        // Document Grid or List
+                        Spacer().frame(height: 180) // lewati bagian segitiga
+
                         ScrollView(showsIndicators: false) {
                             if searchedDocuments.isEmpty {
-                                // Empty state
                                 VStack(spacing: 12) {
                                     Image(systemName: "doc.text.magnifyingglass")
                                         .font(.system(size: 40))
@@ -175,7 +101,7 @@ struct PouchDetailView: View {
                                 }
                                 .frame(maxWidth: .infinity)
                                 .padding(.top, 60)
- 
+
                             } else if viewMode == .gallery {
                                 LazyVGrid(columns: columns, spacing: 14) {
                                     ForEach(searchedDocuments) { doc in
@@ -207,8 +133,8 @@ struct PouchDetailView: View {
                                 }
                                 .padding(.horizontal, 16)
                                 .padding(.top, 14)
-                                .padding(.bottom, 80)
- 
+                                .padding(.bottom, 100)
+
                             } else {
                                 LazyVStack(spacing: 10) {
                                     ForEach(searchedDocuments) { doc in
@@ -247,7 +173,7 @@ struct PouchDetailView: View {
                                     }
                                 }
                                 .padding(.top, 14)
-                                .padding(.bottom, 80)
+                                .padding(.bottom, 100)
                             }
                         }
                     }
@@ -256,8 +182,8 @@ struct PouchDetailView: View {
             }
             .padding(.vertical, -40)
             .ignoresSafeArea(edges: .bottom)
- 
-            // Search bar
+
+            // MARK: - Search bar
             SearchBarView(
                 searchText: $searchText,
                 isCameraActive: $isCameraActive,

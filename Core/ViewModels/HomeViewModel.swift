@@ -11,15 +11,23 @@ import Combine
 
 @MainActor
 class HomeViewModel: ObservableObject {
+    
+    enum PouchViewMode {
+        case gallery
+        case list
+    }
 
     // MARK: - Trip
     @Published var tripName: String = "Japan Trip"
     @Published var documentCount: Int = 23
+    @Published var pouchViewMode: PouchViewMode = .gallery
+    @Published var selectedPouchCategory: DocumentCategory = .all
 
     // MARK: - Navigation
     @Published var isEditing: Bool = false
     @Published var isDetailActive: Bool = false
     @Published var isPreviewActive: Bool = false
+    @Published var isSearchActive: Bool = false
 
     // MARK: - Document
     @Published var selectedDocument: String = ""
@@ -39,10 +47,12 @@ class HomeViewModel: ObservableObject {
 
     // MARK: - Search
     @Published var searchText: String = ""
-    @Published var isSearchActive: Bool = false
 
     // MARK: - Pouch
     @Published var selectedPouch: String = "pouch_blue"
+
+    // MARK: - Deep Link
+    @Published var selectedCategoryFromWidget: String = ""
 
     // MARK: - Constants
     let totalCards = 3
@@ -52,7 +62,8 @@ class HomeViewModel: ObservableObject {
         GridItem(.flexible(), spacing: 10)
     ]
     let pouchAssets = ["pouch_blue", "pouch_gray", "pouch_green", "pouch_pink", "pouch_purple", "pouch_yellow"]
-    let pouchToColor: [String: Color] = [
+
+    private let pouchToColor: [String: Color] = [
         "pouch_blue"   : Color(hex: "63BBF9"),
         "pouch_gray"   : Color(hex: "D4D6D9"),
         "pouch_green"  : Color(hex: "9CDDD0"),
@@ -61,8 +72,38 @@ class HomeViewModel: ObservableObject {
         "pouch_yellow" : Color(hex: "FCDC7E")
     ]
 
+    private let pouchToShape: [String: String] = [
+        "pouch_blue"   : "shape_blue",
+        "pouch_gray"   : "shape_gray",
+        "pouch_green"  : "shape_green",
+        "pouch_pink"   : "shape_pink",
+        "pouch_purple" : "shape_purple",
+        "pouch_yellow" : "shape_yellow"
+    ]
+
+    // MARK: - Computed Properties
     var selectedColor: Color {
         pouchToColor[selectedPouch] ?? Color(hex: "63BBF9")
+    }
+
+    var selectedShape: String {
+        pouchToShape[selectedPouch] ?? "shape_blue"
+    }
+
+    // MARK: - Init
+    init() {
+        NotificationCenter.default.addObserver(
+            forName: .openCategory,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            guard let self else { return }
+            let category = notification.userInfo?["category"] as? String ?? ""
+            Task { @MainActor in
+                self.isDetailActive = true
+                self.selectedCategoryFromWidget = category
+            }
+        }
     }
 
     // MARK: - Actions
@@ -80,5 +121,9 @@ class HomeViewModel: ObservableObject {
         if tripName.trimmingCharacters(in: .whitespaces).isEmpty {
             tripName = "Trip"
         }
+    }
+
+    func resetWidgetCategory() {
+        selectedCategoryFromWidget = ""
     }
 }

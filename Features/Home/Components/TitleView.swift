@@ -10,14 +10,15 @@ import SwiftUI
 struct TitleNormalView: View {
     let tripName: String
     let documentCount: Int
+    var showDocumentCount: Bool = true
 
     var body: some View {
         VStack(spacing: 4) {
-            Text(tripName.isEmpty ? "Trip" : tripName)
-                .font(.largeTitle).bold().lineLimit(1).padding(.horizontal, 30)
-            Text("\(documentCount) Documents")
-                .font(.headline).foregroundColor(.secondary)
-        }
+                    Text(tripName.isEmpty ? "Trip" : tripName)
+                        .font(.largeTitle).bold().lineLimit(1).padding(.horizontal, 30)
+                    Text("\(documentCount) Documents")
+                        .font(.headline).foregroundColor(.secondary)
+                }
     }
 }
 
