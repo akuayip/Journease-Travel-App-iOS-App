@@ -26,6 +26,8 @@ class HomeViewModel: ObservableObject {
     // MARK: - Navigation
     @Published var isEditing: Bool = false
     @Published var isDetailActive: Bool = false
+    @Published var isDetailVisible: Bool = false
+    @Published var isClosingDetail: Bool = false
     @Published var isPreviewActive: Bool = false
     @Published var isSearchActive: Bool = false
 

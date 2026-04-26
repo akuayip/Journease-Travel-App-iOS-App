@@ -12,7 +12,8 @@ struct CarouselView: View {
     let selectedPouch: String
     let isEditing: Bool
     let isDetailActive: Bool
-    let namespace: Namespace.ID
+    let isClosingDetail: Bool
+//    let namespace: Namespace.ID
     let onTap: () -> Void
 
     private var bodyAsset: String {
@@ -35,7 +36,8 @@ struct CarouselView: View {
                             cardWidth: cardWidth,
                             isEditing: isEditing,
                             isDetailActive: isDetailActive,
-                            namespace: namespace,
+                            isClosingDetail: isClosingDetail,
+//                            namespace: namespace,
                             onTap: onTap
                         )
                         .frame(width: cardWidth)
@@ -43,11 +45,12 @@ struct CarouselView: View {
                     }
                 }
                 .scrollTargetLayout()
-                .padding(.top, 50)
+                .padding(.top, 30)
                 .padding(.horizontal, (geo.size.width - cardWidth) / 2)
             }
             .scrollTargetBehavior(.viewAligned)
             .scrollDisabled(isEditing || isDetailActive)
+            .scrollClipDisabled()
         }
     }
 }
@@ -59,13 +62,15 @@ struct PouchCardView: View {
     let cardWidth: CGFloat
     let isEditing: Bool
     let isDetailActive: Bool
-    let namespace: Namespace.ID
+    let isClosingDetail: Bool
+//    let namespace: Namespace.ID
     let onTap: () -> Void
 
     enum PouchState {
         case closed
         case opening
         case open
+        case closing
     }
 
     @State private var pouchState: PouchState = .closed
@@ -97,7 +102,8 @@ struct PouchCardView: View {
                     .scaledToFit()
                     .frame(width: cardWidth)
                     .rotation3DEffect(
-                        .degrees(pouchState == .opening || pouchState == .open ? -180 : 0),
+                        .degrees(pouchState == .opening || pouchState == .open ? -180 :
+                                    pouchState == .closing ? -10 : 0),
                         axis: (x: 1, y: 0, z: 0),
                         anchor: .top,
                         perspective: 0.3
@@ -111,17 +117,19 @@ struct PouchCardView: View {
             }
             .scaleEffect(scale)
             .animation(.spring(response: 0.2, dampingFraction: 0.8), value: scale)
-            .matchedGeometryEffect(id: "hero_card", in: namespace, isSource: !isDetailActive)
+//            .matchedGeometryEffect(id: "hero_card", in: namespace, isSource: !isDetailActive)
             // Tidak ada .clipped() di sini agar lid bebas bergerak
         }
         .onTapGesture {
             guard !isEditing else { return }
             animateOpen()
         }
-        .onChange(of: isDetailActive) { _, newValue in
-            if !newValue {
-                // Reset dengan animasi ketika kembali ke home
-                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+        .onChange(of: isClosingDetail) { _, newValue in
+            if newValue {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                    pouchState = .closing
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     pouchState = .closed
                     scale = 1.0
                 }

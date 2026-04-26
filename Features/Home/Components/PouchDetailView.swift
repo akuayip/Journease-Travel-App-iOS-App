@@ -12,8 +12,6 @@ struct PouchDetailView: View {
     let selectedColor: Color
     let selectedShape: String
     let columns: [GridItem]
-    let namespace: Namespace.ID
-    let isDetailActive: Bool
 
     @Binding var searchText: String
     @Binding var isCameraActive: Bool
@@ -78,13 +76,11 @@ struct PouchDetailView: View {
                         .resizable()
                         .scaledToFill()
                         .frame(width: geo.size.width, height: geo.size.height)
-                        .offset(y: isDetailActive ? 90 : geo.size.height) // ← mulai dari bawah
-                        .animation(.spring(response: 0.5, dampingFraction: 0.8), value: isDetailActive)
-                        .matchedGeometryEffect(id: "hero_card", in: namespace, isSource: isDetailActive)
+                        .offset(y: 30)
 
                     // Konten grid
                     VStack(spacing: 0) {
-                        Spacer().frame(height: 180) // lewati bagian segitiga
+                        Spacer().frame(height: 120) // lewati bagian segitiga
 
                         ScrollView(showsIndicators: false) {
                             if searchedDocuments.isEmpty {
@@ -198,9 +194,10 @@ struct PouchDetailView: View {
         .fullScreenCover(isPresented: $isCameraActive) {
             CameraView(image: $capturedImage, isPresented: $isCameraActive)
                 .ignoresSafeArea()
-                .onChange(of: capturedImage) { _, newImage in
-                    if newImage != nil { isAddDocumentFormActive = true }
-                }
+                
+        }
+        .onChange(of: capturedImage) { _, newImage in
+            if newImage != nil { isAddDocumentFormActive = true }
         }
     }
 }

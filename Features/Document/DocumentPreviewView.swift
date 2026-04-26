@@ -22,6 +22,7 @@ struct DocumentPreviewView: View {
                 } label: {
                     Image(systemName: "chevron.left")
                         .font(.title2)
+                        .bold()
                         .foregroundColor(.primary)
                         .frame(width: 55, height: 55)
                         .background(Color.white)
@@ -34,6 +35,7 @@ struct DocumentPreviewView: View {
                 Button { isDocumentFormActive = true } label: {
                     Image(systemName: "square.and.pencil")
                         .font(.title2)
+                        .bold()
                         .foregroundColor(.primary)
                         .frame(width: 55, height: 55)
                         .background(Color.white)

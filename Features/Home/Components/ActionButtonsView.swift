@@ -35,6 +35,6 @@ struct ActionButtonsView: View {
             }
             
         }
-        .padding(.top, 40)
+        .padding(.top, 70)
     }
 }
