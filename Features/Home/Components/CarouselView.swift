@@ -15,8 +15,7 @@ struct CarouselView: View {
     let isClosingDetail: Bool
     let onTap: (Trip) -> Void
     let onScroll: (Trip) -> Void
-    
-    @State private var scrolledID: Trip.ID?
+    @Binding var scrolledTripID: Trip.ID?  // ← binding agar HomeView bisa scroll
 
     var body: some View {
         GeometryReader { geo in
@@ -44,8 +43,8 @@ struct CarouselView: View {
             .scrollTargetBehavior(.viewAligned)
             .scrollDisabled(isEditing || isDetailActive)
             .scrollClipDisabled()
-            .scrollPosition(id: $scrolledID)
-            .onChange(of: scrolledID) { _, newID in
+            .scrollPosition(id: $scrolledTripID, anchor: .center)
+            .onChange(of: scrolledTripID) { _, newID in
                 if let id = newID,
                    let trip = trips.first(where: { $0.id == id }) {
                     onScroll(trip)
@@ -92,7 +91,7 @@ struct PouchCardView: View {
                     .scaledToFill()
                     .frame(width: cardWidth, height: 220)
                     .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-                    .opacity(pouchState == .open ? 0 : 1)  // ← tambah ini
+                    .opacity(pouchState == .open ? 0 : 1)
                     .animation(.spring(response: 0.35, dampingFraction: 0.75), value: pouchState)
 
                 // Tutup pouch
@@ -150,10 +149,10 @@ struct PouchCardView: View {
         }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
-                pouchState = .open
-                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                    onTap()
-                }
+            pouchState = .open
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                onTap()
             }
+        }
     }
 }

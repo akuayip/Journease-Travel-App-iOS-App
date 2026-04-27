@@ -10,10 +10,11 @@ import PhotosUI
 import SwiftData
 
 struct Home: View {
-    @Query(sort: \Trip.createdAt) var trips: [Trip]
+    @Query(sort: \Trip.order) var trips: [Trip]
     @Environment(\.modelContext) var modelContext
     @StateObject private var vm = HomeViewModel()
-    @State private var currentVisibleTrip: Trip? = nil  // ← track trip yang terlihat di carousel
+    @State private var currentVisibleTrip: Trip? = nil
+    @State private var scrolledTripID: Trip.ID? = nil
 
     var body: some View {
         NavigationStack {
@@ -79,10 +80,8 @@ struct Home: View {
                                         }
                                     }
                                 },
-                                onScroll: { trip in
-                                    // Track trip yang sedang terlihat di carousel
-                                    currentVisibleTrip = trip
-                                }
+                                onScroll: { trip in currentVisibleTrip = trip},
+                                scrolledTripID: $scrolledTripID
                             )
                             .frame(height: 300)
                         }
@@ -103,13 +102,30 @@ struct Home: View {
                                     }
                                 },
                                 onAdd: {
-                                    let tripNumber = trips.count + 1
-                                    let defaultName = tripNumber == 1 ? "Trip" : "Trip \(tripNumber)"
-                                    let newTrip = Trip(name: defaultName, pouchColor: Trip.randomPouchColor())
+                                    let currentIndex = trips.firstIndex(where: { $0.id == currentVisibleTrip?.id }) ?? trips.count - 1
+                                    
+                                    for (i, trip) in trips.enumerated() {
+                                        if i > currentIndex {
+                                            trip.order += 1
+                                        }
+                                    }
+                                    
+                                    let newTrip = Trip(
+                                        name: "Trip",  // ← selalu "Trip" tanpa nomor
+                                        pouchColor: Trip.randomPouchColor(),
+                                        order: currentIndex + 1
+                                    )
                                     modelContext.insert(newTrip)
                                     vm.selectedTrip = newTrip
                                     currentVisibleTrip = newTrip
+                                    
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                        withAnimation(.spring()) {
+                                            scrolledTripID = newTrip.id
+                                        }
+                                    }
                                 },
+                                tripName: currentVisibleTrip?.name ?? "Trip",
                                 showDeleteAlert: $vm.showDeleteTripAlert
                             )
                             Spacer()
@@ -291,6 +307,13 @@ struct Home: View {
             if let selected = vm.selectedTrip, !newTrips.contains(where: { $0.id == selected.id }) {
                 vm.selectedTrip = newTrips.first
                 currentVisibleTrip = newTrips.first
+            }
+        }
+        .onChange(of: vm.isEditing) { _, newValue in
+            if !newValue {
+                if let current = currentVisibleTrip {
+                    scrolledTripID = current.id
+                }
             }
         }
     }

@@ -11,6 +11,7 @@ struct ActionButtonsView: View {
     let onCustomize: () -> Void
     let onDelete: () -> Void
     let onAdd: () -> Void
+    let tripName: String
     @Binding var showDeleteAlert: Bool
 
     var body: some View {
@@ -23,11 +24,11 @@ struct ActionButtonsView: View {
                 Image(systemName: "trash").font(.title2).foregroundStyle(.white)
                     .frame(width: 58, height: 58).background(.gray).clipShape(Circle())
             }
-            .alert("Are you sure you want to delete this trip?", isPresented: $showDeleteAlert) {
+            .alert("Are you sure you want to delete \"\(tripName)\"?", isPresented: $showDeleteAlert) {
                 Button("Delete", role: .destructive) { onDelete() }
                 Button("Cancel", role: .cancel) { }
             } message: {
-                Text("All documents will be deleted.")
+                Text("All documents in this trip will be deleted.")
             }
             Button { onAdd() } label: {
                 Image(systemName: "plus").font(.title2).bold().foregroundStyle(.white)
