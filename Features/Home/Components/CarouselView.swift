@@ -6,39 +6,32 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct CarouselView: View {
-    let totalCards: Int
-    let selectedPouch: String
+    let trips: [Trip]
     let isEditing: Bool
     let isDetailActive: Bool
     let isClosingDetail: Bool
-//    let namespace: Namespace.ID
-    let onTap: () -> Void
-
-    private var bodyAsset: String {
-        selectedPouch.replacingOccurrences(of: "pouch_", with: "bs_")
-    }
-
-    private var lidAsset: String {
-        selectedPouch.replacingOccurrences(of: "pouch_", with: "hs_")
-    }
+    let onTap: (Trip) -> Void
+    let onScroll: (Trip) -> Void
+    
+    @State private var scrolledID: Trip.ID?
 
     var body: some View {
         GeometryReader { geo in
             let cardWidth: CGFloat = geo.size.width * 0.7
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 20) {
-                    ForEach(0..<totalCards, id: \.self) { _ in
+                    ForEach(trips) { trip in
                         PouchCardView(
-                            bodyAsset: bodyAsset,
-                            lidAsset: lidAsset,
+                            bodyAsset: trip.pouchColor.replacingOccurrences(of: "pouch_", with: "bs_"),
+                            lidAsset: trip.pouchColor.replacingOccurrences(of: "pouch_", with: "hs_"),
                             cardWidth: cardWidth,
                             isEditing: isEditing,
                             isDetailActive: isDetailActive,
                             isClosingDetail: isClosingDetail,
-//                            namespace: namespace,
-                            onTap: onTap
+                            onTap: { onTap(trip) }
                         )
                         .frame(width: cardWidth)
                         .frame(height: 300)
@@ -51,6 +44,13 @@ struct CarouselView: View {
             .scrollTargetBehavior(.viewAligned)
             .scrollDisabled(isEditing || isDetailActive)
             .scrollClipDisabled()
+            .scrollPosition(id: $scrolledID)
+            .onChange(of: scrolledID) { _, newID in
+                if let id = newID,
+                   let trip = trips.first(where: { $0.id == id }) {
+                    onScroll(trip)
+                }
+            }
         }
     }
 }
@@ -63,7 +63,6 @@ struct PouchCardView: View {
     let isEditing: Bool
     let isDetailActive: Bool
     let isClosingDetail: Bool
-//    let namespace: Namespace.ID
     let onTap: () -> Void
 
     enum PouchState {
@@ -78,47 +77,42 @@ struct PouchCardView: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            // Shadow card — tidak ikut animasi
+            // Shadow card
             RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .fill(Color(.systemGray4))
                 .frame(width: cardWidth, height: 220)
                 .offset(x: 20, y: 20)
+                .opacity(pouchState == .open ? 0 : 1)
+                .animation(.easeOut(duration: 0.15), value: pouchState)
 
-            // Body + Lid dalam satu ZStack
-            // matchedGeometryEffect di sini agar tidak clip animasi lid
             ZStack(alignment: .top) {
-
-                // Body pouch — hanya body yang di-clip
+                // Body pouch
                 Image(bodyAsset)
                     .resizable()
                     .scaledToFill()
                     .frame(width: cardWidth, height: 220)
                     .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                    .opacity(pouchState == .open ? 0 : 1)  // ← tambah ini
+                    .animation(.spring(response: 0.35, dampingFraction: 0.75), value: pouchState)
 
-                // Tutup pouch — BEBAS tanpa clip
-                // overflow ke luar card saat animasi berlangsung
+                // Tutup pouch
                 Image(lidAsset)
                     .resizable()
                     .scaledToFit()
                     .frame(width: cardWidth)
                     .rotation3DEffect(
                         .degrees(pouchState == .opening || pouchState == .open ? -180 :
-                                    pouchState == .closing ? -10 : 0),
+                                 pouchState == .closing ? -10 : 0),
                         axis: (x: 1, y: 0, z: 0),
                         anchor: .top,
                         perspective: 0.3
                     )
                     .opacity(pouchState == .open ? 0 : 1)
-                    .animation(
-                        .spring(response: 0.35, dampingFraction: 0.75),
-                        value: pouchState
-                    )
+                    .animation(.spring(response: 0.35, dampingFraction: 0.75), value: pouchState)
                     .zIndex(1)
             }
             .scaleEffect(scale)
             .animation(.spring(response: 0.2, dampingFraction: 0.8), value: scale)
-//            .matchedGeometryEffect(id: "hero_card", in: namespace, isSource: !isDetailActive)
-            // Tidak ada .clipped() di sini agar lid bebas bergerak
         }
         .onTapGesture {
             guard !isEditing else { return }
@@ -135,15 +129,19 @@ struct PouchCardView: View {
                 }
             }
         }
+        .onChange(of: isDetailActive) { _, newValue in
+            if !newValue && !isClosingDetail {
+                pouchState = .closed
+                scale = 1.0
+            }
+        }
     }
 
     private func animateOpen() {
-        // Step 1: feedback sentuhan — scale mengecil sedikit
         withAnimation(.spring(response: 0.12, dampingFraction: 0.6)) {
             scale = 0.96
         }
 
-        // Step 2: scale kembali + tutup mulai terangkat
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             withAnimation(.spring(response: 0.25, dampingFraction: 0.7)) {
                 scale = 1.0
@@ -151,12 +149,11 @@ struct PouchCardView: View {
             }
         }
 
-        // Step 3: tunggu animasi tutup selesai, baru pindah ke detail
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
-            pouchState = .open
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                onTap()
+                pouchState = .open
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                    onTap()
+                }
             }
-        }
     }
 }

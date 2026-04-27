@@ -7,55 +7,109 @@
 
 import SwiftUI
 import PhotosUI
+import SwiftData
 
 struct Home: View {
-
+    @Query(sort: \Trip.createdAt) var trips: [Trip]
+    @Environment(\.modelContext) var modelContext
     @StateObject private var vm = HomeViewModel()
+    @State private var currentVisibleTrip: Trip? = nil  // ← track trip yang terlihat di carousel
 
     var body: some View {
         NavigationStack {
             ZStack {
                 Color(.systemGray5).ignoresSafeArea()
 
-                // MARK: - Home content — selalu ada di belakang
                 ZStack {
 
-                    // MARK: - Title — selalu di atas semua layer
+                    // MARK: - Title
                     VStack {
                         VStack(spacing: 4) {
                             if vm.isEditing {
-                                TitleEditView(tripName: $vm.tripName, onClear: { vm.tripName = "" })
+                                TitleEditView(
+                                    tripName: Binding(
+                                        get: { vm.selectedTrip?.name ?? "" },
+                                        set: { vm.selectedTrip?.name = $0 }
+                                    ),
+                                    onClear: { vm.selectedTrip?.name = "" }
+                                )
                             } else {
-                                TitleNormalView(tripName: vm.tripName, documentCount: vm.documentCount)
+                                TitleNormalView(
+                                    tripName: currentVisibleTrip?.name ?? vm.selectedTrip?.name ?? "Journease",
+                                    documentCount: vm.documentCount
+                                )
                             }
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.top, 60)
                         Spacer()
                     }
-                    .zIndex(10)
+                    .zIndex(vm.isDetailActive ? 0 : 10)
 
-                    // MARK: - Carousel + action buttons
+                    // MARK: - Carousel
                     VStack(spacing: 0) {
                         Spacer().frame(height: 140)
 
-                        CarouselView(
-                            totalCards: vm.totalCards,
-                            selectedPouch: vm.selectedPouch,
-                            isEditing: vm.isEditing,
-                            isDetailActive: vm.isDetailActive,
-                            isClosingDetail: vm.isClosingDetail,
-                            onTap: {
-                                vm.isDetailActive = true
+                        if trips.isEmpty {
+                            VStack(spacing: 16) {
+                                Image(systemName: "bag.badge.plus")
+                                    .font(.system(size: 50))
+                                    .foregroundColor(.secondary)
+                                Text("No trips yet")
+                                    .font(.headline)
+                                    .foregroundColor(.secondary)
+                                Text("Tap + to add your first trip")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
                             }
-                        )
-                        .frame(height: 300)
+                            .frame(height: 300)
+                        } else {
+                            CarouselView(
+                                trips: trips,
+                                isEditing: vm.isEditing,
+                                isDetailActive: vm.isDetailActive,
+                                isClosingDetail: vm.isClosingDetail,
+                                onTap: { trip in
+                                    vm.selectedTrip = trip
+                                    vm.isPouchOpening = true
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                                        withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+                                            vm.isDetailActive = true
+                                            vm.isPouchOpening = false
+                                        }
+                                    }
+                                },
+                                onScroll: { trip in
+                                    // Track trip yang sedang terlihat di carousel
+                                    currentVisibleTrip = trip
+                                }
+                            )
+                            .frame(height: 300)
+                        }
 
                         if !vm.isDetailActive && !vm.isEditing {
                             ActionButtonsView(
-                                onCustomize: { withAnimation(.spring()) { vm.isEditing = true } },
-                                onDelete: { vm.deleteTrip() },
-                                onAdd: { print("Add trip") },
+                                onCustomize: {
+                                    vm.selectedTrip = currentVisibleTrip ?? trips.first
+                                    withAnimation(.spring()) { vm.isEditing = true }
+                                },
+                                onDelete: {
+                                    // Hapus trip yang sedang terlihat di carousel
+                                    if let tripToDelete = currentVisibleTrip ?? trips.first {
+                                        modelContext.delete(tripToDelete)
+                                        // Set ke trip pertama yang tersisa
+                                        vm.selectedTrip = trips.first(where: { $0.id != tripToDelete.id })
+                                        currentVisibleTrip = vm.selectedTrip
+                                    }
+                                },
+                                onAdd: {
+                                    let tripNumber = trips.count + 1
+                                    let defaultName = tripNumber == 1 ? "Trip" : "Trip \(tripNumber)"
+                                    let newTrip = Trip(name: defaultName, pouchColor: Trip.randomPouchColor())
+                                    modelContext.insert(newTrip)
+                                    vm.selectedTrip = newTrip
+                                    currentVisibleTrip = newTrip
+                                },
                                 showDeleteAlert: $vm.showDeleteTripAlert
                             )
                             Spacer()
@@ -89,12 +143,14 @@ struct Home: View {
                             Spacer()
                         }
                     }
-                    .zIndex(1)
+                    .zIndex(vm.isDetailActive ? 20 : 1)
+                    .opacity(vm.isPouchOpening || vm.isDetailActive ? 0 : 1)
+                    .animation(.easeOut(duration: 0.15), value: vm.isPouchOpening)
 
                     // MARK: - PouchDetailView
                     if vm.isDetailActive {
                         PouchDetailView(
-                            selectedColor: vm.selectedColor,
+                            selectedColor: vm.selectedTrip?.color ?? Color(hex: "63BBF9"),
                             selectedShape: vm.selectedShape,
                             columns: vm.columns,
                             searchText: $vm.searchText,
@@ -120,7 +176,8 @@ struct Home: View {
                             },
                             viewMode: vm.pouchViewMode
                         )
-                        .padding(.top, 200)
+                        .padding(.top, 300)
+                        .transition(.move(edge: .bottom))
                         .zIndex(5)
                     }
 
@@ -192,11 +249,13 @@ struct Home: View {
                         VStack {
                             Spacer()
                             CustomizePanelView(
-                                selectedPouch: $vm.selectedPouch,
+                                selectedPouch: Binding(
+                                    get: { vm.selectedTrip?.pouchColor ?? "pouch_blue" },
+                                    set: { vm.selectedTrip?.pouchColor = $0 }
+                                ),
                                 pouchAssets: vm.pouchAssets,
                                 onDone: {
-                                    vm.validateTripName()
-                                        withAnimation(.spring()) { vm.isEditing = false }
+                                    withAnimation(.spring()) { vm.isEditing = false }
                                 }
                             )
                         }
@@ -205,18 +264,16 @@ struct Home: View {
                     }
                 }
 
-                // MARK: - DocumentPreviewView sebagai overlay di atas semua
+                // MARK: - DocumentPreviewView
                 if vm.isPreviewActive {
                     DocumentPreviewView(
                         selectedDocument: vm.selectedDocument,
                         selectedDocumentName: vm.selectedDocumentName,
                         onBack: {
-                            // Langsung dismiss — home content sudah ada di belakang
                             vm.isPreviewActive = false
                         }
                     )
                     .background(Color(.systemGray5))
-//                    .transition(.opacity)
                     .zIndex(100)
                 }
             }
@@ -224,9 +281,22 @@ struct Home: View {
         .sheet(isPresented: $vm.isSearchActive) {
             DocumentSearchView()
         }
+        .onAppear {
+            if vm.selectedTrip == nil {
+                vm.selectedTrip = trips.first
+                currentVisibleTrip = trips.first
+            }
+        }
+        .onChange(of: trips) { _, newTrips in
+            if let selected = vm.selectedTrip, !newTrips.contains(where: { $0.id == selected.id }) {
+                vm.selectedTrip = newTrips.first
+                currentVisibleTrip = newTrips.first
+            }
+        }
     }
 }
 
 #Preview {
     Home()
+        .modelContainer(for: Trip.self, inMemory: true)
 }

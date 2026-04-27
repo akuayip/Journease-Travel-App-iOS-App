@@ -2,18 +2,25 @@
 //  Trip.swift
 //  Journease
 //
-//  Created by M. Arief Rahman Hakim on 21/04/26.
+//  Created by M. Arief Rahman Hakim on 26/04/26.
 //
 
 import SwiftUI
+import SwiftData
 
-struct Trip: Identifiable {
-    let id = UUID()
+@Model
+class Trip {
     var name: String
-    var totalDocuments: Int
     var pouchColor: String
-    var startDate: Date?
+    var createdAt: Date
 
+    init(name: String = "Trip", pouchColor: String) {
+        self.name = name
+        self.pouchColor = pouchColor
+        self.createdAt = Date()
+    }
+
+    // Computed property color — tetap ada seperti sebelumnya
     var color: Color {
         let pouchToColor: [String: Color] = [
             "pouch_blue"   : Color(hex: "63BBF9"),
@@ -24,5 +31,12 @@ struct Trip: Identifiable {
             "pouch_yellow" : Color(hex: "FCDC7E")
         ]
         return pouchToColor[pouchColor] ?? Color(hex: "63BBF9")
+    }
+
+    // Warna random untuk trip baru
+    static func randomPouchColor() -> String {
+        let colors = ["pouch_blue", "pouch_gray", "pouch_green",
+                      "pouch_pink", "pouch_purple", "pouch_yellow"]
+        return colors.randomElement() ?? "pouch_blue"
     }
 }

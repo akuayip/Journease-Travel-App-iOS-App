@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 @main
 struct TravelApp: App {
@@ -16,6 +17,7 @@ struct TravelApp: App {
                     handleDeepLink(url)
                 }
         }
+        .modelContainer(for: Trip.self)
     }
 
     func handleDeepLink(_ url: URL) {

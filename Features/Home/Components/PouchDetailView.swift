@@ -76,11 +76,11 @@ struct PouchDetailView: View {
                         .resizable()
                         .scaledToFill()
                         .frame(width: geo.size.width, height: geo.size.height)
-                        .offset(y: 30)
+                        .offset(y: -30)
 
                     // Konten grid
                     VStack(spacing: 0) {
-                        Spacer().frame(height: 120) // lewati bagian segitiga
+                        Spacer()
 
                         ScrollView(showsIndicators: false) {
                             if searchedDocuments.isEmpty {
