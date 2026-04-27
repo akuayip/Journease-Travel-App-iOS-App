@@ -145,7 +145,7 @@ struct Home: View {
                                 }
                                 .padding(.horizontal, 20)
                                 .frame(height: 55)
-                                .background(Color.white)
+                                .background(Color(.systemBackground))
                                 .clipShape(Capsule())
                                 .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 4)
                                 .padding(.horizontal, 30)
@@ -215,7 +215,7 @@ struct Home: View {
                                     .font(.title2).bold()
                                     .foregroundColor(.primary)
                                     .frame(width: 55, height: 55)
-                                    .background(Color.white)
+                                    .background(Color(.systemBackground))
                                     .clipShape(Circle())
                                     .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 2)
                             }
@@ -250,7 +250,7 @@ struct Home: View {
                                     .font(.title2)
                                     .foregroundColor(.primary)
                                     .frame(width: 55, height: 55)
-                                    .background(Color.white)
+                                    .background(Color(.systemBackground))
                                     .clipShape(Circle())
                                     .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 2)
                             }

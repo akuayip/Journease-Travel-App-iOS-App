@@ -22,12 +22,17 @@ struct SearchBarView: View {
     var body: some View {
         HStack(spacing: 15) {
             HStack {
-                Image(systemName: "magnifyingglass").font(.title2)
-                TextField("Search", text: $searchText).font(.title3)
+                Image(systemName: "magnifyingglass")
+                    .font(.title2)
+                    .foregroundColor(.primary)
+                TextField("Search", text: $searchText)
+                    .font(.title3)
                 Image(systemName: "mic.fill").font(.title2)
+                    .foregroundColor(.primary)
             }
             .padding(.horizontal, 20).frame(height: 55)
-            .background(Color.white).clipShape(Capsule())
+            .background(Color(.systemBackground))
+            .clipShape(Capsule())
             .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 4)
 
             Menu {
@@ -48,9 +53,12 @@ struct SearchBarView: View {
                     Label("Take a Photo", systemImage: "camera")
                 }
             } label: {
-                Image(systemName: "plus").font(.title2).foregroundColor(.black)
+                Image(systemName: "plus")
+                    .font(.title2)
+                    .foregroundColor(.primary)
                     .frame(width: 55, height: 55)
-                    .background(Color.white).clipShape(Circle())
+                    .background(Color(.systemBackground))
+                    .clipShape(Circle())
                     .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 5)
             }
             .photosPicker(isPresented: $isPhotoPickerActive, selection: $photosItem, matching: .images)

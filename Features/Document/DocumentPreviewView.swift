@@ -30,7 +30,7 @@ struct DocumentPreviewView: View {
                         .font(.title2)
                         .foregroundColor(.primary)
                         .frame(width: 55, height: 55)
-                        .background(Color.white)
+                        .background(Color(.systemBackground))
                         .clipShape(Circle())
                         .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
                 }
@@ -42,7 +42,7 @@ struct DocumentPreviewView: View {
                         .font(.title2)
                         .foregroundColor(.primary)
                         .frame(width: 55, height: 55)
-                        .background(Color.white)
+                        .background(Color(.systemBackground))
                         .clipShape(Circle())
                         .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
                 }

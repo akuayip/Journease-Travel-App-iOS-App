@@ -209,10 +209,10 @@ struct DocumentFormView: View {
                         } label: {
                             Text("Save")
                                 .font(.title3)
-                                .foregroundColor(isFormValid ? .white : .white.opacity(0.5))
+                                .foregroundColor(isFormValid ? Color(.systemBackground) : Color(.systemBackground).opacity(0.5))
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 55)
-                                .background(isFormValid ? Color.black : Color.black.opacity(0.3))
+                                .background(isFormValid ? Color(.label) : Color(.label).opacity(0.3))
                                 .clipShape(Capsule())
                         }
                         .disabled(!isFormValid)
@@ -287,7 +287,7 @@ struct DocumentFormView: View {
                             .padding(.vertical, 14)
                         }
                     }
-                    .background(.white)
+                    .background(Color(.systemBackground))  // ← ganti dari .white
                     .clipShape(RoundedRectangle(cornerRadius: 16))
                     .shadow(color: .black.opacity(0.15), radius: 20, x: 0, y: 10)
                     .frame(width: 220)
@@ -312,7 +312,7 @@ struct DocumentFormView: View {
                     Button { showActionSheet.toggle() } label: {
                         Image(systemName: "ellipsis")
                             .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.black)
+                            .foregroundColor(.primary)
                             .padding(8)
                             .clipShape(Circle())
                     }
