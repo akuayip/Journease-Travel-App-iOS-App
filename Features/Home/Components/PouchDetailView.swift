@@ -7,11 +7,13 @@
 
 import SwiftUI
 import PhotosUI
+import SwiftData
 
 struct PouchDetailView: View {
     let selectedColor: Color
     let selectedShape: String
     let columns: [GridItem]
+    let trip: Trip?
 
     @Binding var searchText: String
     @Binding var isCameraActive: Bool
@@ -20,48 +22,30 @@ struct PouchDetailView: View {
     @Binding var isAddDocumentFormActive: Bool
     @Binding var capturedImage: UIImage?
     @Binding var photosItem: PhotosPickerItem?
+    @Binding var selectedFileURL: URL?  // ← binding langsung, bukan $vm
 
     @Binding var selectedCategory: DocumentCategory
 
     let onBack: () -> Void
-    let onSelectDocument: (String, String) -> Void
+    let onSelectDocument: (Document) -> Void
     let viewMode: HomeViewModel.PouchViewMode
 
-    // MARK: - Dummy Data
-    struct DocumentItem: Identifiable {
-        let id = UUID()
-        let name: String
-        let category: DocumentCategory
-        let imageName: String
+    // MARK: - Filtered + Searched dari trip
+    var documents: [Document] {
+        trip?.documents ?? []
     }
 
-    let dummyDocuments: [DocumentItem] = [
-        DocumentItem(name: "KTP", category: .identity, imageName: "ktp"),
-        DocumentItem(name: "Passport", category: .identity, imageName: "ktp"),
-        DocumentItem(name: "Visa", category: .identity, imageName: "ktp"),
-        DocumentItem(name: "SIM", category: .identity, imageName: "ktp"),
-        DocumentItem(name: "Tiket Pesawat", category: .transportation, imageName: "ktp"),
-        DocumentItem(name: "Boarding Pass", category: .transportation, imageName: "ktp"),
-        DocumentItem(name: "Tiket Kereta", category: .transportation, imageName: "ktp"),
-        DocumentItem(name: "Booking Hotel", category: .accommodation, imageName: "ktp"),
-        DocumentItem(name: "Voucher Airbnb", category: .accommodation, imageName: "ktp"),
-        DocumentItem(name: "Tiket Wahana", category: .activity, imageName: "ktp"),
-        DocumentItem(name: "Itinerary", category: .activity, imageName: "ktp"),
-        DocumentItem(name: "Travel Insurance", category: .others, imageName: "ktp"),
-    ]
-
-    // MARK: - Filtered + Searched
-    var searchedDocuments: [DocumentItem] {
+    var searchedDocuments: [Document] {
         let filtered = selectedCategory == .all
-            ? dummyDocuments
-            : dummyDocuments.filter { $0.category == selectedCategory }
+            ? documents
+            : documents.filter { $0.category == selectedCategory.rawValue }
 
         if searchText.trimmingCharacters(in: .whitespaces).isEmpty {
             return filtered
         }
         return filtered.filter {
             $0.name.lowercased().contains(searchText.lowercased()) ||
-            $0.category.rawValue.lowercased().contains(searchText.lowercased())
+            $0.category.lowercased().contains(searchText.lowercased())
         }
     }
 
@@ -102,13 +86,11 @@ struct PouchDetailView: View {
                                 LazyVGrid(columns: columns, spacing: 14) {
                                     ForEach(searchedDocuments) { doc in
                                         Button {
-                                            onSelectDocument(doc.imageName, doc.name)
+                                            onSelectDocument(doc)
                                         } label: {
                                             VStack(spacing: 4) {
                                                 GeometryReader { g in
-                                                    Image(doc.imageName)
-                                                        .resizable()
-                                                        .scaledToFit()
+                                                    documentThumbnail(doc: doc)
                                                         .frame(width: g.size.width, height: 85)
                                                         .clipShape(RoundedRectangle(cornerRadius: 10))
                                                 }
@@ -119,7 +101,7 @@ struct PouchDetailView: View {
                                                     .lineLimit(1)
                                                 HStack(spacing: 3) {
                                                     Image(systemName: "folder").font(.caption2)
-                                                    Text(doc.category.rawValue).font(.caption2)
+                                                    Text(doc.category).font(.caption2)
                                                         .lineLimit(1)
                                                 }
                                                 .foregroundColor(.black.opacity(0.6))
@@ -135,12 +117,10 @@ struct PouchDetailView: View {
                                 LazyVStack(spacing: 10) {
                                     ForEach(searchedDocuments) { doc in
                                         Button {
-                                            onSelectDocument(doc.imageName, doc.name)
+                                            onSelectDocument(doc)
                                         } label: {
                                             HStack(spacing: 14) {
-                                                Image(doc.imageName)
-                                                    .resizable()
-                                                    .scaledToFill()
+                                                documentThumbnail(doc: doc)
                                                     .frame(width: 60, height: 60)
                                                     .clipShape(RoundedRectangle(cornerRadius: 10))
                                                 VStack(alignment: .leading, spacing: 4) {
@@ -150,7 +130,7 @@ struct PouchDetailView: View {
                                                         .lineLimit(1)
                                                     HStack(spacing: 4) {
                                                         Image(systemName: "folder").font(.caption2)
-                                                        Text(doc.category.rawValue).font(.caption2)
+                                                        Text(doc.category).font(.caption2)
                                                             .lineLimit(1)
                                                     }
                                                     .foregroundColor(.black.opacity(0.6))
@@ -172,6 +152,9 @@ struct PouchDetailView: View {
                                 .padding(.bottom, 100)
                             }
                         }
+//                        .onTapGesture {
+//                            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+//                        }
                     }
                 }
                 .frame(width: geo.size.width, height: geo.size.height)
@@ -187,17 +170,47 @@ struct PouchDetailView: View {
                 isFilePickerActive: $isFilePickerActive,
                 isAddDocumentFormActive: $isAddDocumentFormActive,
                 capturedImage: $capturedImage,
-                photosItem: $photosItem
+                photosItem: $photosItem,
+                selectedFileURL: $selectedFileURL,  // ← binding langsung
+                trip: trip
             )
             .padding(.bottom, 20)
         }
+        .onTapGesture {
+            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        }
+        
         .fullScreenCover(isPresented: $isCameraActive) {
             CameraView(image: $capturedImage, isPresented: $isCameraActive)
                 .ignoresSafeArea()
-                
         }
         .onChange(of: capturedImage) { _, newImage in
             if newImage != nil { isAddDocumentFormActive = true }
+        }
+    }
+
+    // MARK: - Thumbnail helper
+    @ViewBuilder
+    private func documentThumbnail(doc: Document) -> some View {
+        if let filePath = doc.filePath,
+           let image = FileManagerHelper.loadImage(from: filePath) {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+        } else if doc.fileType == "pdf",
+                  let filePath = doc.filePath,
+                  let pdfImage = FileManagerHelper.loadPDFThumbnail(from: filePath) {
+            Image(uiImage: pdfImage)
+                .resizable()
+                .scaledToFill()
+        } else {
+            ZStack {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Color.gray.opacity(0.1))
+                Image(systemName: "doc")
+                    .font(.system(size: 30))
+                    .foregroundColor(.gray.opacity(0.7))
+            }
         }
     }
 }

@@ -31,6 +31,8 @@ class HomeViewModel: ObservableObject {
     @Published var isSearchActive: Bool = false
 
     // MARK: - Document
+    @Published var selectedDocumentObject: Document? = nil
+    @Published var selectedFileURL: URL? = nil
     @Published var selectedDocument: String = ""
     @Published var selectedDocumentName: String = ""
 
@@ -72,9 +74,9 @@ class HomeViewModel: ObservableObject {
         return pouchToShape[selectedPouch] ?? "shape_blue"
     }
 
-    // Sementara 0 — akan diupdate setelah relasi Trip ↔ Document dibuat
+    // MARK: - Document Count
     var documentCount: Int {
-        0
+        selectedTrip?.documents.count ?? 0
     }
 
     // MARK: - Constants

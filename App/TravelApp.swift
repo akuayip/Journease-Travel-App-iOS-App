@@ -17,7 +17,7 @@ struct TravelApp: App {
                     handleDeepLink(url)
                 }
         }
-        .modelContainer(for: Trip.self)
+        .modelContainer(for: [Trip.self, Document.self])
     }
 
     func handleDeepLink(_ url: URL) {

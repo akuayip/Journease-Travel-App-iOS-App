@@ -6,43 +6,24 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct DocumentSearchView: View {
     @State private var searchText: String = ""
+    @State private var selectedDocument: Document? = nil
     @Environment(\.dismiss) var dismiss
     @FocusState private var isFocused: Bool
 
-    let allDocuments: [DocumentItem] = [
-        DocumentItem(name: "KTP", category: .identity, imageName: "ktp", tripName: "Japan Trip"),
-        DocumentItem(name: "Passport", category: .identity, imageName: "ktp", tripName: "Japan Trip"),
-        DocumentItem(name: "Visa", category: .identity, imageName: "ktp", tripName: "Japan Trip"),
-        DocumentItem(name: "SIM", category: .identity, imageName: "ktp", tripName: "Japan Trip"),
-        DocumentItem(name: "Tiket Pesawat", category: .transportation, imageName: "ktp", tripName: "Japan Trip"),
-        DocumentItem(name: "Boarding Pass", category: .transportation, imageName: "ktp", tripName: "Japan Trip"),
-        DocumentItem(name: "Tiket Kereta", category: .transportation, imageName: "ktp", tripName: "Japan Trip"),
-        DocumentItem(name: "Booking Hotel", category: .accommodation, imageName: "ktp", tripName: "Japan Trip"),
-        DocumentItem(name: "Voucher Airbnb", category: .accommodation, imageName: "ktp", tripName: "Japan Trip"),
-        DocumentItem(name: "Tiket Wahana", category: .activity, imageName: "ktp", tripName: "Japan Trip"),
-        DocumentItem(name: "Itinerary", category: .activity, imageName: "ktp", tripName: "Japan Trip"),
-        DocumentItem(name: "Travel Insurance", category: .others, imageName: "ktp", tripName: "Japan Trip"),
-    ]
+    @Query var allDocuments: [Document]
 
-    struct DocumentItem: Identifiable {
-        let id = UUID()
-        let name: String
-        let category: DocumentCategory
-        let imageName: String
-        let tripName: String
-    }
-
-    var searchResults: [DocumentItem] {
+    var searchResults: [Document] {
         if searchText.trimmingCharacters(in: .whitespaces).isEmpty {
             return []
         }
         return allDocuments.filter {
             $0.name.lowercased().contains(searchText.lowercased()) ||
-            $0.category.rawValue.lowercased().contains(searchText.lowercased()) ||
-            $0.tripName.lowercased().contains(searchText.lowercased())
+            $0.category.lowercased().contains(searchText.lowercased()) ||
+            ($0.trip?.name ?? "").lowercased().contains(searchText.lowercased())
         }
     }
 
@@ -52,7 +33,6 @@ struct DocumentSearchView: View {
 
             VStack(spacing: 0) {
                 if searchText.isEmpty {
-                    // Idle state
                     VStack(spacing: 12) {
                         Image(systemName: "magnifyingglass")
                             .font(.system(size: 36))
@@ -66,7 +46,6 @@ struct DocumentSearchView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
 
                 } else if searchResults.isEmpty {
-                    // Empty state
                     VStack(spacing: 12) {
                         Image(systemName: "doc.text.magnifyingglass")
                             .font(.system(size: 40))
@@ -82,11 +61,8 @@ struct DocumentSearchView: View {
                     .padding(.horizontal, 30)
 
                 } else {
-                    // Results
                     ScrollView(showsIndicators: false) {
                         VStack(alignment: .leading, spacing: 0) {
-
-                            // Header
                             HStack {
                                 Text("Top Hits")
                                     .font(.title3).bold()
@@ -99,21 +75,16 @@ struct DocumentSearchView: View {
                             .padding(.top, 20)
                             .padding(.bottom, 12)
 
-                            // List
                             VStack(spacing: 10) {
                                 ForEach(searchResults) { doc in
                                     Button {
-                                        dismiss()
+                                        selectedDocument = doc  // ← buka preview
                                     } label: {
                                         HStack(spacing: 14) {
-                                            // Thumbnail
-                                            Image(doc.imageName)
-                                                .resizable()
-                                                .scaledToFill()
+                                            documentThumbnail(doc: doc)
                                                 .frame(width: 60, height: 60)
                                                 .clipShape(RoundedRectangle(cornerRadius: 10))
 
-                                            // Info
                                             VStack(alignment: .leading, spacing: 4) {
                                                 Text(doc.name)
                                                     .font(.system(size: 16, weight: .semibold))
@@ -122,7 +93,7 @@ struct DocumentSearchView: View {
                                                 HStack(spacing: 4) {
                                                     Image(systemName: "folder")
                                                         .font(.caption2)
-                                                    Text(doc.tripName)
+                                                    Text(doc.trip?.name ?? "Unknown Trip")
                                                         .font(.subheadline)
                                                         .lineLimit(1)
                                                 }
@@ -186,6 +157,39 @@ struct DocumentSearchView: View {
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 isFocused = true
+            }
+        }
+        // Sheet preview document
+        .sheet(item: $selectedDocument) { doc in
+            DocumentPreviewView(
+                document: doc,
+                onBack: {
+                    selectedDocument = nil
+                }
+            )
+        }
+    }
+
+    // MARK: - Thumbnail helper
+    @ViewBuilder
+    private func documentThumbnail(doc: Document) -> some View {
+        if let filePath = doc.filePath,
+           let image = FileManagerHelper.loadImage(from: filePath) {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+        } else if doc.fileType == "pdf",
+                  let filePath = doc.filePath,
+                  let pdfImage = FileManagerHelper.loadPDFThumbnail(from: filePath) {
+            Image(uiImage: pdfImage)
+                .resizable()
+                .scaledToFill()
+        } else {
+            ZStack {
+                Color(.systemGray5)
+                Image(systemName: doc.fileType == "pdf" ? "doc.richtext" : "doc")
+                    .font(.system(size: 24))
+                    .foregroundColor(.secondary)
             }
         }
     }

@@ -7,47 +7,69 @@
 
 import SwiftUI
 import PhotosUI
+import SwiftData
 
 struct DocumentFormView: View {
 
     @Environment(\.dismiss) var dismiss
+    @Environment(\.modelContext) var modelContext
+
+    let trip: Trip?
+    let editingDocument: Document? 
 
     @State private var docName: String
-    @State private var description: String = ""
+    @State private var description: String
     @State private var showActionSheet: Bool = false
     @State private var showDeleteAlert: Bool = false
     @State private var selectedImage: UIImage? = nil
+    @State private var selectedFileURL: URL? = nil
+    @State private var selectedFileType: String? = nil
     @State private var photosItem: PhotosPickerItem? = nil
-    @State private var selectedCategory: DocumentCategory = .identity
+    @State private var selectedCategory: DocumentCategory
     @State private var isCameraActive: Bool = false
     @State private var isPhotoPickerActive: Bool = false
     @State private var isFilePickerActive: Bool = false
-
-    @State private var startDate: Date = {
-        let calendar = Calendar.current
-        var components = calendar.dateComponents([.year, .month, .day], from: Date())
-        components.hour = 12
-        components.minute = 0
-        return calendar.date(from: components) ?? Date()
-    }()
-
-    @State private var endDate: Date = {
-        let calendar = Calendar.current
-        var components = calendar.dateComponents([.year, .month, .day], from: Date())
-        components.hour = 13
-        components.minute = 0
-        return calendar.date(from: components) ?? Date()
-    }()
+    @State private var startDate: Date
+    @State private var endDate: Date
 
     private var isFormValid: Bool {
         !docName.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
-    var initialDocName: String = ""
+    init(trip: Trip? = nil, initialDocName: String = "", selectedImage: UIImage? = nil, selectedFileURL: URL? = nil, document: Document? = nil) {
+        self.trip = trip
+        self.editingDocument = document
+        self._docName = State(initialValue: document?.name ?? initialDocName)
+        self._selectedImage = State(initialValue: {
+            if let filePath = document?.filePath {
+                return FileManagerHelper.loadImage(from: filePath)
+            }
+            return selectedImage
+        }())
+        self._selectedFileURL = State(initialValue: selectedFileURL)
+        self._description = State(initialValue: document?.desc ?? "")
+        self._selectedCategory = State(initialValue: DocumentCategory(rawValue: document?.category ?? "") ?? .identity)
+        self._selectedFileType = State(initialValue: document?.fileType)
 
-    init(initialDocName: String = "", selectedImage: UIImage? = nil) {
-        self._docName = State(initialValue: initialDocName)
-        self._selectedImage = State(initialValue: selectedImage)
+        // startDate
+        let defaultStart: Date = {
+            let calendar = Calendar.current
+            var components = calendar.dateComponents([.year, .month, .day], from: Date())
+            components.hour = 12
+            components.minute = 0
+            return calendar.date(from: components) ?? Date()
+        }()
+        self._startDate = State(initialValue: document?.startDate ?? defaultStart)
+
+        // endDate
+        let defaultEnd: Date = {
+            let calendar = Calendar.current
+            var components = calendar.dateComponents([.year, .month, .day], from: Date())
+            components.hour = 13
+            components.minute = 0
+            return calendar.date(from: components) ?? Date()
+        }()
+        self._endDate = State(initialValue: document?.endDate ?? defaultEnd)
     }
 
     var body: some View {
@@ -58,7 +80,7 @@ struct DocumentFormView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 25) {
 
-                        // Image
+                        // Image / File preview
                         if let image = selectedImage {
                             Image(uiImage: image)
                                 .resizable()
@@ -66,6 +88,20 @@ struct DocumentFormView: View {
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 250)
                                 .clipShape(RoundedRectangle(cornerRadius: 20))
+                        } else if selectedFileType == "pdf" {
+                            RoundedRectangle(cornerRadius: 20)
+                                .fill(Color.red.opacity(0.1))
+                                .frame(height: 250)
+                                .overlay(
+                                    VStack(spacing: 12) {
+                                        Image(systemName: "doc.richtext")
+                                            .font(.system(size: 50))
+                                            .foregroundColor(.red.opacity(0.7))
+                                        Text("PDF Document")
+                                            .font(.subheadline)
+                                            .foregroundColor(.secondary)
+                                    }
+                                )
                         } else {
                             RoundedRectangle(cornerRadius: 20)
                                 .fill(Color.gray.opacity(0.3))
@@ -94,7 +130,6 @@ struct DocumentFormView: View {
                                         docName = String(newValue.prefix(50))
                                     }
                                 }
-                                
                         }
 
                         // Category & Date
@@ -140,7 +175,6 @@ struct DocumentFormView: View {
                                 Spacer()
                                 DatePicker("", selection: $startDate)
                                     .labelsHidden()
-                                    
                             }
                             .padding()
 
@@ -152,7 +186,6 @@ struct DocumentFormView: View {
                                 Spacer()
                                 DatePicker("", selection: $endDate)
                                     .labelsHidden()
-                                    
                             }
                             .padding()
                         }
@@ -172,8 +205,7 @@ struct DocumentFormView: View {
 
                         // Save Button
                         Button {
-                            print("Save Document")
-                            dismiss()
+                            saveDocument()
                         } label: {
                             Text("Save")
                                 .font(.title3)
@@ -196,7 +228,6 @@ struct DocumentFormView: View {
                         .onTapGesture { showActionSheet = false }
 
                     VStack(alignment: .leading, spacing: 0) {
-                        // Edit Photo → Menu
                         Menu {
                             Button {
                                 showActionSheet = false
@@ -228,7 +259,6 @@ struct DocumentFormView: View {
 
                         Divider()
 
-                        // Delete File
                         Button {
                             showActionSheet = false
                             showDeleteAlert = true
@@ -244,7 +274,6 @@ struct DocumentFormView: View {
 
                         Divider()
 
-                        // Get Info
                         Button {
                             showActionSheet = false
                             print("Get Info")
@@ -266,7 +295,7 @@ struct DocumentFormView: View {
                     .padding(.trailing, 15)
                 }
             }
-            .navigationTitle("Japan Trip")
+            .navigationTitle(editingDocument != nil ? "Edit Document" : (trip?.name ?? "Document"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -291,8 +320,9 @@ struct DocumentFormView: View {
             }
             .alert("Are you sure you want to delete this document?", isPresented: $showDeleteAlert) {
                 Button("Delete", role: .destructive) {
-                    print("File deleted")
-                    dismiss()
+                    selectedImage = nil
+                    selectedFileURL = nil
+                    selectedFileType = nil
                 }
                 Button("Cancel", role: .cancel) { }
             } message: {
@@ -308,20 +338,89 @@ struct DocumentFormView: View {
                     if let data = try? await newItem?.loadTransferable(type: Data.self),
                        let uiImage = UIImage(data: data) {
                         selectedImage = uiImage
+                        selectedFileType = "image"
                     }
                 }
             }
             .fileImporter(isPresented: $isFilePickerActive, allowedContentTypes: [.image, .pdf]) { result in
-                if case .success(let url) = result,
-                   let data = try? Data(contentsOf: url),
-                   let uiImage = UIImage(data: data) {
-                    selectedImage = uiImage
+                if case .success(let url) = result {
+                    _ = url.startAccessingSecurityScopedResource()
+                    if url.pathExtension.lowercased() == "pdf" {
+                        selectedFileURL = url
+                        selectedFileType = "pdf"
+                        selectedImage = nil
+                    } else if let data = try? Data(contentsOf: url),
+                              let uiImage = UIImage(data: data) {
+                        selectedImage = uiImage
+                        selectedFileType = "image"
+                    }
+                    url.stopAccessingSecurityScopedResource()
                 }
             }
         }
+        .onAppear {
+                if let url = selectedFileURL,
+                   url.pathExtension.lowercased() == "pdf",
+                   selectedFileType == nil {
+                    selectedFileType = "pdf"
+                }
+            }
+    }
+
+    // MARK: - Save / Update Document
+    private func saveDocument() {
+        var filePath: String? = editingDocument?.filePath
+        var fileType: String? = editingDocument?.fileType
+
+        if let image = selectedImage, editingDocument?.fileType != "image" || selectedImage != nil {
+            if let newPath = FileManagerHelper.saveImage(image) {
+                if let oldPath = editingDocument?.filePath {
+                    FileManagerHelper.deleteFile(filename: oldPath)
+                }
+                filePath = newPath
+                fileType = "image"
+            }
+        } else if let url = selectedFileURL,
+                  let data = try? Data(contentsOf: url) {
+            if let newPath = FileManagerHelper.savePDF(data) {
+                if let oldPath = editingDocument?.filePath {
+                    FileManagerHelper.deleteFile(filename: oldPath)
+                }
+                filePath = newPath
+                fileType = "pdf"
+            }
+        }
+
+        if let doc = editingDocument {
+            // MODE EDIT — update dokumen yang ada
+            doc.name = docName
+            doc.category = selectedCategory.rawValue
+            doc.desc = description
+            doc.startDate = startDate
+            doc.endDate = endDate
+            doc.filePath = filePath
+            doc.fileType = fileType
+        } else {
+            // MODE CREATE — buat dokumen baru
+            let newDocument = Document(
+                name: docName,
+                category: selectedCategory.rawValue,
+                filePath: filePath,
+                fileType: fileType,
+                startDate: startDate,
+                endDate: endDate,
+                desc: description,
+                trip: trip
+            )
+            modelContext.insert(newDocument)
+            trip?.documents.append(newDocument)
+        }
+
+        dismiss()
     }
 }
 
 #Preview {
     DocumentFormView()
+        .modelContainer(for: [Trip.self, Document.self], inMemory: true)
 }

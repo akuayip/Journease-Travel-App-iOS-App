@@ -15,12 +15,15 @@ class Trip {
     var createdAt: Date
     var order: Int
 
+    @Relationship(deleteRule: .cascade, inverse: \Document.trip)
+    var documents: [Document] = []
+
     init(name: String = "Trip", pouchColor: String, order: Int = 0) {
-            self.name = name
-            self.pouchColor = pouchColor
-            self.createdAt = Date()
-            self.order = order
-        }
+        self.name = name
+        self.pouchColor = pouchColor
+        self.createdAt = Date()
+        self.order = order
+    }
 
     // Computed property color — tetap ada seperti sebelumnya
     var color: Color {

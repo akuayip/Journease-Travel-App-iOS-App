@@ -37,7 +37,7 @@ struct Home: View {
                             } else {
                                 TitleNormalView(
                                     tripName: currentVisibleTrip?.name ?? vm.selectedTrip?.name ?? "Journease",
-                                    documentCount: vm.documentCount
+                                    documentCount: currentVisibleTrip?.documents.count ?? vm.selectedTrip?.documents.count ?? 0
                                 )
                             }
                         }
@@ -80,7 +80,7 @@ struct Home: View {
                                         }
                                     }
                                 },
-                                onScroll: { trip in currentVisibleTrip = trip},
+                                onScroll: { trip in currentVisibleTrip = trip },
                                 scrolledTripID: $scrolledTripID
                             )
                             .frame(height: 300)
@@ -93,32 +93,30 @@ struct Home: View {
                                     withAnimation(.spring()) { vm.isEditing = true }
                                 },
                                 onDelete: {
-                                    // Hapus trip yang sedang terlihat di carousel
                                     if let tripToDelete = currentVisibleTrip ?? trips.first {
                                         modelContext.delete(tripToDelete)
-                                        // Set ke trip pertama yang tersisa
                                         vm.selectedTrip = trips.first(where: { $0.id != tripToDelete.id })
                                         currentVisibleTrip = vm.selectedTrip
                                     }
                                 },
                                 onAdd: {
                                     let currentIndex = trips.firstIndex(where: { $0.id == currentVisibleTrip?.id }) ?? trips.count - 1
-                                    
+
                                     for (i, trip) in trips.enumerated() {
                                         if i > currentIndex {
                                             trip.order += 1
                                         }
                                     }
-                                    
+
                                     let newTrip = Trip(
-                                        name: "Trip",  // ← selalu "Trip" tanpa nomor
+                                        name: "Trip",
                                         pouchColor: Trip.randomPouchColor(),
                                         order: currentIndex + 1
                                     )
                                     modelContext.insert(newTrip)
                                     vm.selectedTrip = newTrip
                                     currentVisibleTrip = newTrip
-                                    
+
                                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                                         withAnimation(.spring()) {
                                             scrolledTripID = newTrip.id
@@ -169,6 +167,7 @@ struct Home: View {
                             selectedColor: vm.selectedTrip?.color ?? Color(hex: "63BBF9"),
                             selectedShape: vm.selectedShape,
                             columns: vm.columns,
+                            trip: vm.selectedTrip,  // ← pass trip
                             searchText: $vm.searchText,
                             isCameraActive: $vm.isCameraActive,
                             isPhotoPickerActive: $vm.isPhotoPickerActive,
@@ -176,6 +175,7 @@ struct Home: View {
                             isAddDocumentFormActive: $vm.isAddDocumentFormActive,
                             capturedImage: $vm.capturedImage,
                             photosItem: $vm.photosItem,
+                            selectedFileURL: $vm.selectedFileURL,
                             selectedCategory: $vm.selectedPouchCategory,
                             onBack: {
                                 vm.isDetailActive = false
@@ -187,8 +187,9 @@ struct Home: View {
                                     vm.resetWidgetCategory()
                                 }
                             },
-                            onSelectDocument: { imageName, docName in
-                                vm.selectDocument(imageName: imageName, docName: docName)
+                            onSelectDocument: { document in
+                                vm.selectedDocumentObject = document
+                                vm.isPreviewActive = true
                             },
                             viewMode: vm.pouchViewMode
                         )
@@ -246,7 +247,7 @@ struct Home: View {
                                 }
                             } label: {
                                 Image(systemName: "ellipsis")
-                                    .font(.title2).bold()
+                                    .font(.title2)
                                     .foregroundColor(.primary)
                                     .frame(width: 55, height: 55)
                                     .background(Color.white)
@@ -281,10 +282,9 @@ struct Home: View {
                 }
 
                 // MARK: - DocumentPreviewView
-                if vm.isPreviewActive {
+                if vm.isPreviewActive, let document = vm.selectedDocumentObject {
                     DocumentPreviewView(
-                        selectedDocument: vm.selectedDocument,
-                        selectedDocumentName: vm.selectedDocumentName,
+                        document: document,
                         onBack: {
                             vm.isPreviewActive = false
                         }
@@ -296,6 +296,19 @@ struct Home: View {
         }
         .sheet(isPresented: $vm.isSearchActive) {
             DocumentSearchView()
+        }
+        // Sheet untuk add document form
+        .sheet(isPresented: $vm.isAddDocumentFormActive) {
+            DocumentFormView(
+                trip: vm.selectedTrip,
+                selectedImage: vm.capturedImage,
+                selectedFileURL: vm.selectedFileURL
+            )
+            .onDisappear {
+                vm.capturedImage = nil
+                vm.photosItem = nil
+                vm.selectedFileURL = nil
+            }
         }
         .onAppear {
             if vm.selectedTrip == nil {
@@ -321,5 +334,5 @@ struct Home: View {
 
 #Preview {
     Home()
-        .modelContainer(for: Trip.self, inMemory: true)
+        .modelContainer(for: [Trip.self, Document.self], inMemory: true)
 }
