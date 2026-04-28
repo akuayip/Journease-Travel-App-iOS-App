@@ -15,7 +15,8 @@ struct DocumentFormView: View {
     @Environment(\.modelContext) var modelContext
 
     let trip: Trip?
-    let editingDocument: Document? 
+    let editingDocument: Document?
+    let onDelete: (() -> Void)?
 
     @State private var docName: String
     @State private var description: String
@@ -36,7 +37,7 @@ struct DocumentFormView: View {
         !docName.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
-    init(trip: Trip? = nil, initialDocName: String = "", selectedImage: UIImage? = nil, selectedFileURL: URL? = nil, document: Document? = nil) {
+    init(trip: Trip? = nil, initialDocName: String = "", selectedImage: UIImage? = nil, selectedFileURL: URL? = nil, document: Document? = nil, onDelete: (() -> Void)? = nil) {
         self.trip = trip
         self.editingDocument = document
         self._docName = State(initialValue: document?.name ?? initialDocName)
@@ -50,6 +51,7 @@ struct DocumentFormView: View {
         self._description = State(initialValue: document?.desc ?? "")
         self._selectedCategory = State(initialValue: DocumentCategory(rawValue: document?.category ?? "") ?? .identity)
         self._selectedFileType = State(initialValue: document?.fileType)
+        self.onDelete = onDelete
 
         // startDate
         let defaultStart: Date = {
@@ -320,9 +322,20 @@ struct DocumentFormView: View {
             }
             .alert("Are you sure you want to delete this document?", isPresented: $showDeleteAlert) {
                 Button("Delete", role: .destructive) {
+                    // Hapus file dari FileManager
+                    if let filePath = editingDocument?.filePath {
+                        FileManagerHelper.deleteFile(filename: filePath)
+                    }
+                    // Hapus dari SwiftData
+                    if let doc = editingDocument {
+                        modelContext.delete(doc)
+                    }
+                    // Reset state lokal
                     selectedImage = nil
                     selectedFileURL = nil
                     selectedFileType = nil
+                    dismiss()
+                    onDelete?()
                 }
                 Button("Cancel", role: .cancel) { }
             } message: {
