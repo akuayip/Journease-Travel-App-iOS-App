@@ -34,6 +34,16 @@ struct CarouselView: View {
                         )
                         .frame(width: cardWidth)
                         .frame(height: 300)
+                        .scrollTransition { content, phase in
+                            content
+                                .scaleEffect(phase.isIdentity ? 1.0 : 0.82)
+                                .opacity(phase.isIdentity ? 1.0 : 0.6)
+                                .offset(y: phase.isIdentity ? -15 : 10)  // ← aktif naik, lainnya turun
+                                .rotation3DEffect(
+                                    .degrees(phase.isIdentity ? 0 : 5),
+                                    axis: (x: 1, y: 0, z: 0)  // ← sumbu X untuk efek "tidur/rebah"
+                                )
+                        }
                     }
                 }
                 .scrollTargetLayout()
