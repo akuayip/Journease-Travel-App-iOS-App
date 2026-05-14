@@ -15,6 +15,8 @@ struct Home: View {
     @StateObject private var vm = HomeViewModel()
     @State private var currentVisibleTrip: Trip? = nil
     @State private var scrolledTripID: Trip.ID? = nil
+    @State private var pendingScrollTripID: Trip.ID? = nil
+    @State private var pendingScrollOrder: Int? = nil
 
     var body: some View {
         NavigationStack {
@@ -80,7 +82,14 @@ struct Home: View {
                                         }
                                     }
                                 },
-                                onScroll: { trip in currentVisibleTrip = trip },
+                                onScroll: { trip in
+                                    if pendingScrollTripID != nil || pendingScrollOrder != nil {
+                                        guard trip.id == pendingScrollTripID || trip.order == pendingScrollOrder else { return }
+                                    }
+
+                                    currentVisibleTrip = trip
+                                    vm.selectedTrip = trip
+                                },
                                 scrolledTripID: $scrolledTripID
                             )
                             .frame(height: 300)
@@ -89,41 +98,14 @@ struct Home: View {
                         if !vm.isDetailActive && !vm.isEditing {
                             ActionButtonsView(
                                 onCustomize: {
-                                    vm.selectedTrip = currentVisibleTrip ?? trips.first
+                                    vm.selectedTrip = currentTripForAction()
                                     withAnimation(.spring()) { vm.isEditing = true }
                                 },
-                                onDelete: {
-                                    if let tripToDelete = currentVisibleTrip ?? trips.first {
-                                        modelContext.delete(tripToDelete)
-                                        vm.selectedTrip = trips.first(where: { $0.id != tripToDelete.id })
-                                        currentVisibleTrip = vm.selectedTrip
-                                    }
-                                },
-                                onAdd: {
-                                    let currentIndex = trips.firstIndex(where: { $0.id == currentVisibleTrip?.id }) ?? trips.count - 1
-
-                                    for (i, trip) in trips.enumerated() {
-                                        if i > currentIndex {
-                                            trip.order += 1
-                                        }
-                                    }
-
-                                    let newTrip = Trip(
-                                        name: "Trip",
-                                        pouchColor: Trip.randomPouchColor(),
-                                        order: currentIndex + 1
-                                    )
-                                    modelContext.insert(newTrip)
-                                    vm.selectedTrip = newTrip
-                                    currentVisibleTrip = newTrip
-
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                        withAnimation(.spring()) {
-                                            scrolledTripID = newTrip.id
-                                        }
-                                    }
-                                },
-                                tripName: currentVisibleTrip?.name ?? "Trip",
+                                onDeleteTap: handleDeleteTap,
+                                onDelete: deleteCurrentTrip,
+                                onAdd: addTripAfterCurrent,
+                                tripName: currentTripForAction()?.name ?? "Trip",
+                                hasTrips: !trips.isEmpty,
                                 showDeleteAlert: $vm.showDeleteTripAlert
                             )
                             Spacer()
@@ -287,6 +269,10 @@ struct Home: View {
                         document: document,
                         onBack: {
                             vm.isPreviewActive = false
+                        },
+                        onDelete: {
+                            vm.selectedDocumentObject = nil
+                            vm.isPreviewActive = false
                         }
                     )
                     .background(Color(.systemGray5))
@@ -317,6 +303,25 @@ struct Home: View {
             }
         }
         .onChange(of: trips) { _, newTrips in
+            if let pendingTrip = pendingTrip(in: newTrips) {
+                DispatchQueue.main.async {
+                    vm.selectedTrip = pendingTrip
+                    currentVisibleTrip = pendingTrip
+                    withAnimation(.spring()) {
+                        scrolledTripID = pendingTrip.id
+                    }
+
+                    let resolvedID = pendingTrip.id
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
+                        if pendingScrollTripID == resolvedID || pendingScrollOrder == pendingTrip.order {
+                            pendingScrollTripID = nil
+                            pendingScrollOrder = nil
+                        }
+                    }
+                }
+                return
+            }
+
             if let selected = vm.selectedTrip, !newTrips.contains(where: { $0.id == selected.id }) {
                 vm.selectedTrip = newTrips.first
                 currentVisibleTrip = newTrips.first
@@ -329,6 +334,108 @@ struct Home: View {
                 }
             }
         }
+    }
+
+    private func pendingTrip(in trips: [Trip]) -> Trip? {
+        if let pendingID = pendingScrollTripID,
+           let trip = trips.first(where: { $0.id == pendingID }) {
+            return trip
+        }
+
+        if let pendingOrder = pendingScrollOrder {
+            return trips.first(where: { $0.order == pendingOrder })
+        }
+
+        return nil
+    }
+
+    private func addTripAfterCurrent() {
+        let currentTrip = currentTripForInsertion()
+        let currentIndex = currentTrip.flatMap { current in
+            trips.firstIndex(where: { $0.id == current.id })
+        } ?? trips.count - 1
+        let insertionIndex = trips.isEmpty ? 0 : min(currentIndex + 1, trips.count)
+
+        for (index, trip) in trips.enumerated() {
+            trip.order = index >= insertionIndex ? index + 1 : index
+        }
+
+        let newTrip = Trip(
+            name: "Trip",
+            pouchColor: Trip.randomPouchColor(),
+            order: insertionIndex
+        )
+
+        vm.selectedTrip = newTrip
+        currentVisibleTrip = newTrip
+        pendingScrollTripID = newTrip.id
+        pendingScrollOrder = insertionIndex
+        scrolledTripID = newTrip.id
+        modelContext.insert(newTrip)
+    }
+
+    private func deleteCurrentTrip() {
+        guard let tripToDelete = currentTripForAction(),
+              let deleteIndex = trips.firstIndex(where: { $0.id == tripToDelete.id })
+        else { return }
+
+        let nextTrip = nextTripAfterDeleting(at: deleteIndex)
+        modelContext.delete(tripToDelete)
+
+        for (index, trip) in trips.filter({ $0.id != tripToDelete.id }).enumerated() {
+            trip.order = index
+        }
+
+        vm.selectedTrip = nextTrip
+        currentVisibleTrip = nextTrip
+        scrolledTripID = nextTrip?.id
+        pendingScrollTripID = nil
+        pendingScrollOrder = nil
+    }
+
+    private func handleDeleteTap() {
+        guard let trip = currentTripForAction() else { return }
+
+        if trip.documents.isEmpty {
+            deleteCurrentTrip()
+        } else {
+            vm.showDeleteTripAlert = true
+        }
+    }
+
+    private func nextTripAfterDeleting(at index: Int) -> Trip? {
+        let remainingTrips = trips.enumerated()
+            .filter { $0.offset != index }
+            .map(\.element)
+
+        if index < remainingTrips.count {
+            return remainingTrips[index]
+        }
+
+        return remainingTrips.last
+    }
+
+    private func currentTripForInsertion() -> Trip? {
+        currentTripForAction() ?? trips.last
+    }
+
+    private func currentTripForAction() -> Trip? {
+        if let scrolledID = scrolledTripID,
+           let trip = trips.first(where: { $0.id == scrolledID }) {
+            return trip
+        }
+
+        if let visibleTrip = currentVisibleTrip,
+           let trip = trips.first(where: { $0.id == visibleTrip.id }) {
+            return trip
+        }
+
+        if let selectedTrip = vm.selectedTrip,
+           let trip = trips.first(where: { $0.id == selectedTrip.id }) {
+            return trip
+        }
+
+        return nil
     }
 }
 

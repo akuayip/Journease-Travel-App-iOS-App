@@ -267,7 +267,7 @@ struct DocumentFormView: View {
                         } label: {
                             HStack(spacing: 12) {
                                 Image(systemName: "trash").frame(width: 20)
-                                Text("Delete File")
+                                Text("Delete Document")
                             }
                             .foregroundColor(.red)
                             .padding(.horizontal, 20)
@@ -305,18 +305,13 @@ struct DocumentFormView: View {
                         Image(systemName: "xmark")
                             .font(.system(size: 16, weight: .bold))
                             .foregroundColor(.primary)
-                            .background(.ultraThinMaterial)
-                            .clipShape(Circle())
-                            .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
                     }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button { showActionSheet.toggle() } label: {
                         Image(systemName: "ellipsis")
-                            .font(.system(size: 14, weight: .bold))
+                            .font(.system(size: 16, weight: .bold))
                             .foregroundColor(.primary)
-                            .padding(8)
-                            .clipShape(Circle())
                     }
                 }
             }
@@ -330,12 +325,8 @@ struct DocumentFormView: View {
                     if let doc = editingDocument {
                         modelContext.delete(doc)
                     }
-                    // Reset state lokal
-                    selectedImage = nil
-                    selectedFileURL = nil
-                    selectedFileType = nil
-                    dismiss()
                     onDelete?()
+                    dismiss()
                 }
                 Button("Cancel", role: .cancel) { }
             } message: {

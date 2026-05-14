@@ -9,21 +9,32 @@ import SwiftUI
 
 struct ActionButtonsView: View {
     let onCustomize: () -> Void
+    let onDeleteTap: () -> Void
     let onDelete: () -> Void
     let onAdd: () -> Void
     let tripName: String
+    let hasTrips: Bool
     @Binding var showDeleteAlert: Bool
 
     var body: some View {
         HStack(spacing: 20) {
             Button { onCustomize() } label: {
                 Image(systemName: "slider.horizontal.3").font(.title2).foregroundStyle(.white)
-                    .frame(width: 58, height: 58).background(.gray).clipShape(Circle())
+                    .frame(width: 58, height: 58)
+                    .background(hasTrips ? .gray : .gray.opacity(0.35))
+                    .clipShape(Circle())
             }
-            Button { showDeleteAlert = true } label: {
+            .disabled(!hasTrips)
+            .opacity(hasTrips ? 1 : 0.55)
+
+            Button { onDeleteTap() } label: {
                 Image(systemName: "trash").font(.title2).foregroundStyle(.white)
-                    .frame(width: 58, height: 58).background(.gray).clipShape(Circle())
+                    .frame(width: 58, height: 58)
+                    .background(hasTrips ? .gray : .gray.opacity(0.35))
+                    .clipShape(Circle())
             }
+            .disabled(!hasTrips)
+            .opacity(hasTrips ? 1 : 0.55)
             .alert("Are you sure you want to delete \"\(tripName)\"?", isPresented: $showDeleteAlert) {
                 Button("Delete", role: .destructive) { onDelete() }
                 Button("Cancel", role: .cancel) { }

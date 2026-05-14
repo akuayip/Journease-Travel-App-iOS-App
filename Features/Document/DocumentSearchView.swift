@@ -165,6 +165,9 @@ struct DocumentSearchView: View {
                 document: doc,
                 onBack: {
                     selectedDocument = nil
+                },
+                onDelete: {
+                    selectedDocument = nil
                 }
             )
         }

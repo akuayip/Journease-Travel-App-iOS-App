@@ -39,6 +39,7 @@
 
 /* Begin PBXFileReference section */
 		A953B03A2F9A633D00487B6B /* Journease-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Journease-Info.plist"; sourceTree = "<group>"; };
+		A97D89D22FB56B1600427D20 /* Journease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Journease.entitlements; sourceTree = "<group>"; };
 		A9DD83302F920B9700669DA6 /* Journease.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Journease.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A9DD83522F93702600669DA6 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A9DD83722F95E21300669DA6 /* JourneaseWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = JourneaseWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -105,6 +106,7 @@
 		A9DD83272F920B9700669DA6 = {
 			isa = PBXGroup;
 			children = (
+				A97D89D22FB56B1600427D20 /* Journease.entitlements */,
 				A953B03A2F9A633D00487B6B /* Journease-Info.plist */,
 				A9DD83522F93702600669DA6 /* Assets.xcassets */,
 				A9DD83CE2F97126000669DA6 /* App */,
@@ -393,6 +395,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Journease.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = XCVG2YQ8D3;
@@ -430,6 +433,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Journease.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = XCVG2YQ8D3;

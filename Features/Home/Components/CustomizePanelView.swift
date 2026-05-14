@@ -12,6 +12,10 @@ struct CustomizePanelView: View {
     let pouchAssets: [String]
     let onDone: () -> Void
 
+    private func previewAssetName(for pouchName: String) -> String {
+        pouchName.replacingOccurrences(of: "pouch_", with: "c_")
+    }
+
     var body: some View {
         VStack(spacing: 20) {
             HStack {
@@ -34,7 +38,7 @@ struct CustomizePanelView: View {
                         Button {
                             withAnimation(.spring()) { selectedPouch = pouchName }
                         } label: {
-                            Image(pouchName)
+                            Image(previewAssetName(for: pouchName))
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
                                 .frame(width: 140, height: 100)

@@ -20,45 +20,64 @@ struct CarouselView: View {
     var body: some View {
         GeometryReader { geo in
             let cardWidth: CGFloat = geo.size.width * 0.7
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 20) {
-                    ForEach(trips) { trip in
-                        PouchCardView(
-                            bodyAsset: trip.pouchColor.replacingOccurrences(of: "pouch_", with: "bs_"),
-                            lidAsset: trip.pouchColor.replacingOccurrences(of: "pouch_", with: "hs_"),
-                            cardWidth: cardWidth,
-                            isEditing: isEditing,
-                            isDetailActive: isDetailActive,
-                            isClosingDetail: isClosingDetail,
-                            onTap: { onTap(trip) }
-                        )
-                        .frame(width: cardWidth)
-                        .frame(height: 300)
-                        .scrollTransition { content, phase in
-                            content
-                                .scaleEffect(phase.isIdentity ? 1.0 : 0.82)
-                                .opacity(phase.isIdentity ? 1.0 : 0.6)
-                                .offset(y: phase.isIdentity ? -15 : 10)  // ← aktif naik, lainnya turun
-                                .rotation3DEffect(
-                                    .degrees(phase.isIdentity ? 0 : 5),
-                                    axis: (x: 1, y: 0, z: 0)  // ← sumbu X untuk efek "tidur/rebah"
-                                )
+            ScrollViewReader { proxy in
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 20) {
+                        ForEach(trips) { trip in
+                            PouchCardView(
+                                bodyAsset: trip.pouchColor.replacingOccurrences(of: "pouch_", with: "bs_"),
+                                lidAsset: trip.pouchColor.replacingOccurrences(of: "pouch_", with: "hs_"),
+                                cardWidth: cardWidth,
+                                isEditing: isEditing,
+                                isDetailActive: isDetailActive,
+                                isClosingDetail: isClosingDetail,
+                                onTap: { onTap(trip) }
+                            )
+                            .frame(width: cardWidth)
+                            .frame(height: 300)
+                            .id(trip.id)
+                            .scrollTransition { content, phase in
+                                content
+                                    .scaleEffect(phase.isIdentity ? 1.0 : 0.82)
+                                    .opacity(phase.isIdentity ? 1.0 : 0.6)
+                                    .offset(y: phase.isIdentity ? -15 : 10)  // ← aktif naik, lainnya turun
+                                    .rotation3DEffect(
+                                        .degrees(phase.isIdentity ? 0 : 5),
+                                        axis: (x: 1, y: 0, z: 0)  // ← sumbu X untuk efek "tidur/rebah"
+                                    )
+                            }
                         }
                     }
+                    .scrollTargetLayout()
+                    .padding(.top, 30)
                 }
-                .scrollTargetLayout()
-                .padding(.top, 30)
-                .padding(.horizontal, (geo.size.width - cardWidth) / 2)
-            }
-            .scrollTargetBehavior(.viewAligned)
-            .scrollDisabled(isEditing || isDetailActive)
-            .scrollClipDisabled()
-            .scrollPosition(id: $scrolledTripID, anchor: .center)
-            .onChange(of: scrolledTripID) { _, newID in
-                if let id = newID,
-                   let trip = trips.first(where: { $0.id == id }) {
+                .contentMargins(.horizontal, (geo.size.width - cardWidth) / 2, for: .scrollContent)
+                .scrollTargetBehavior(.viewAligned)
+                .scrollDisabled(isEditing || isDetailActive)
+                .scrollClipDisabled()
+                .scrollPosition(id: $scrolledTripID, anchor: .center)
+                .onChange(of: scrolledTripID) { _, newID in
+                    guard let id = newID,
+                          let trip = trips.first(where: { $0.id == id })
+                    else { return }
+
                     onScroll(trip)
+                    centerTrip(id, using: proxy)
                 }
+                .onChange(of: trips.map(\.id)) { _, _ in
+                    if let id = scrolledTripID {
+                        centerTrip(id, using: proxy, delay: 0.05)
+                        centerTrip(id, using: proxy, delay: 0.25)
+                    }
+                }
+            }
+        }
+    }
+
+    private func centerTrip(_ id: Trip.ID, using proxy: ScrollViewProxy, delay: TimeInterval = 0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+            withAnimation(.spring()) {
+                proxy.scrollTo(id, anchor: .center)
             }
         }
     }
